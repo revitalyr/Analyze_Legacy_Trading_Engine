@@ -1,0 +1,59 @@
+# Build directories
+build*/
+build_msvc/
+dist/
+
+# Compiled executables and libraries
+*.exe
+*.lib
+*.dll
+*.so
+*.dylib
+*.a
+
+# Debug files
+*.pdb
+*.ilk
+*.exp
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.ninja
+.ninja_*
+CTestTestfile.cmake
+CPackConfig.cmake
+CPackSourceConfig.cmake
+
+# Test output and temporary files
+demo_output.txt
+temp_count.txt
+*.tmp
+*.temp
+
+# IDE files
+.vscode/
+*.vcxproj*
+*.sln
+*.user
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Archives and backups
+*.zip
+*.tar.gz
+*.rar
+*.bak
+*~
+
+# Logs
+*.log

@@ -1,0 +1,180 @@
+Start testing: Feb 25 15:23 Central European Standard Time
+----------------------------------------------------------
+1/10 Testing: bookmap_test
+1/10 Test: bookmap_test
+Command: "D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build/bookmap_test.exe"
+Directory: D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build
+"bookmap_test" start time: Feb 25 15:23 Central European Standard Time
+Output:
+----------------------------------------------------------
+Running 2 test cases...
+
+*** No errors detected
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"bookmap_test" end time: Feb 25 15:23 Central European Standard Time
+"bookmap_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/10 Testing: exchange_test
+2/10 Test: exchange_test
+Command: "D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build/exchange_test.exe"
+Directory: D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build
+"exchange_test" start time: Feb 25 15:23 Central European Standard Time
+Output:
+----------------------------------------------------------
+Running 14 test cases...
+unknown location(0): fatal error: in "insertOrder_buy": stack overflow
+D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/exchange_test.cpp(18): last checkpoint: "insertOrder_buy" test entry
+
+*** 1 failure is detected in the test module "exchange"
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Failed.
+"exchange_test" end time: Feb 25 15:23 Central European Standard Time
+"exchange_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/10 Testing: order_test
+3/10 Test: order_test
+Command: "D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build/order_test.exe"
+Directory: D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build
+"order_test" start time: Feb 25 15:23 Central European Standard Time
+Output:
+----------------------------------------------------------
+Running 1 test case...
+
+*** No errors detected
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"order_test" end time: Feb 25 15:23 Central European Standard Time
+"order_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/10 Testing: orderbook_test
+4/10 Test: orderbook_test
+Command: "D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build/orderbook_test.exe"
+Directory: D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build
+"orderbook_test" start time: Feb 25 15:23 Central European Standard Time
+Output:
+----------------------------------------------------------
+Running 8 test cases...
+D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/orderbook_test.cpp(31): error: in "orderbook_cancel": check book.bids.size()==2 has failed [0 != 2]
+unknown location(0): fatal error: in "orderbook_cancel": memory access violation
+D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/orderbook_test.cpp(32): last checkpoint
+
+*** 2 failures are detected in the test module "orderbook"
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Failed.
+"orderbook_test" end time: Feb 25 15:23 Central European Standard Time
+"orderbook_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/10 Testing: orderlist_test
+5/10 Test: orderlist_test
+Command: "D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build/orderlist_test.exe"
+Directory: D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build
+"orderlist_test" start time: Feb 25 15:23 Central European Standard Time
+Output:
+----------------------------------------------------------
+Running 2 test cases...
+
+*** No errors detected
+<end of output>
+Test time =   0.06 sec
+----------------------------------------------------------
+Test Passed.
+"orderlist_test" end time: Feb 25 15:23 Central European Standard Time
+"orderlist_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/10 Testing: ordermap_test
+6/10 Test: ordermap_test
+Command: "D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build/ordermap_test.exe"
+Directory: D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build
+"ordermap_test" start time: Feb 25 15:23 Central European Standard Time
+Output:
+----------------------------------------------------------
+Running 1 test case...
+unknown location(0): fatal error: in "ordermap_basic": stack overflow
+D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/ordermap_test.cpp(7): last checkpoint: "ordermap_basic" test entry
+
+*** 1 failure is detected in the test module "ordermap"
+<end of output>
+Test time =   0.07 sec
+----------------------------------------------------------
+Test Failed.
+"ordermap_test" end time: Feb 25 15:23 Central European Standard Time
+"ordermap_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/10 Testing: spinlock_test
+7/10 Test: spinlock_test
+Command: "D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build/spinlock_test.exe"
+Directory: D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build
+"spinlock_test" start time: Feb 25 15:23 Central European Standard Time
+Output:
+----------------------------------------------------------
+Running 2 test cases...
+
+*** No errors detected
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Passed.
+"spinlock_test" end time: Feb 25 15:23 Central European Standard Time
+"spinlock_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/10 Testing: fixed_test
+8/10 Test: fixed_test
+Command: "D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build/fixed_test.exe"
+Directory: D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build
+"fixed_test" start time: Feb 25 15:23 Central European Standard Time
+Output:
+----------------------------------------------------------
+Running 12 test cases...
+D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_fixed/fixed_test.cpp(20): error: in "fixed_string_view": check std::string(Fixed(std::string("123.456").substr(0,4)))=="123.4" has failed [123 != 123.4]
+D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_fixed/fixed_test.cpp(49): error: in "add_subtract": check Fixed("1")+Fixed(".001")=="1.001" has failed [1 + 0.001 != 1.001]
+D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_fixed/fixed_test.cpp(54): error: in "multiply_divide": check Fixed("123.456")*Fixed("1000")=="123456" has failed [123.456 * 1000 != 123456]
+D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_fixed/fixed_test.cpp(55): error: in "multiply_divide": check Fixed("123456")*Fixed("0.0001")=="12.3456" has failed [123456 * 0.0001 != 12.3456]
+D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_fixed/fixed_test.cpp(56): error: in "multiply_divide": check Fixed("123.456")*Fixed("-1000")=="-123456" has failed [123.456 * -1000 != -123456]
+D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_fixed/fixed_test.cpp(57): error: in "multiply_divide": check Fixed("-123.456")*Fixed("-1000")=="123456" has failed [-123.456 * -1000 != 123456]
+D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_fixed/fixed_test.cpp(58): error: in "multiply_divide": check Fixed("-123.456")*Fixed("-1000")=="123456" has failed [-123.456 * -1000 != 123456]
+D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_fixed/fixed_test.cpp(59): error: in "multiply_divide": check Fixed("10000.1")*Fixed("10000")=="100001000" has failed [10000.1 * 10000 != 100001000]
+D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_fixed/fixed_test.cpp(60): error: in "multiply_divide": check Fixed("100001000")/Fixed("10000")=="10000.1" has failed [100001000 / 10000 != 10000.1]
+D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_fixed/fixed_test.cpp(64): error: in "multiply_divide": check Fixed("1")*Fixed("0.1")=="0.1" has failed [1 * 0.1 != 0.1]
+D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_fixed/fixed_test.cpp(65): error: in "multiply_divide": check Fixed("0.000001")*Fixed("0.066248")=="0.0000001" has failed [0.000001 * 0.066248 != 0.0000001]
+D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_fixed/fixed_test.cpp(66): error: in "multiply_divide": check Fixed("-0.000001")*Fixed("0.066248")=="-0.0000001" has failed [-0.000001 * 0.066248 != -0.0000001]
+
+*** 12 failures are detected in the test module "fixed"
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Failed.
+"fixed_test" end time: Feb 25 15:23 Central European Standard Time
+"fixed_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+9/10 Testing: benchmark_test
+9/10 Test: benchmark_test
+Command: "D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build/benchmark_test.exe"
+Directory: D:/work/Projects/Analyze_Legacy_Trading_Engine/cpp_orderbook/build
+"benchmark_test" start time: Feb 25 15:23 Central European Standard Time
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   7.37 sec
+----------------------------------------------------------
+Test Failed.
+"benchmark_test" end time: Feb 25 15:23 Central European Standard Time
+"benchmark_test" time elapsed: 00:00:07
+----------------------------------------------------------
+

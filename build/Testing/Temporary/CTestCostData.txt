@@ -1,0 +1,24 @@
+bookmap_test 26 0
+exchange_test 0 0
+order_test 26 0
+orderbook_test 21 0
+orderlist_test 26 0
+ordermap_test 0 0
+spinlock_test 26 0
+fixed_test 4 0
+ordermap_test_simple 0 0
+benchmark_test 0 0
+benchmark_multithread_test 0 0
+orderbook_modern_test 0 0
+---
+bookmap_test
+exchange_test
+order_test
+orderbook_modern_test
+orderbook_test
+orderlist_test
+ordermap_test
+spinlock_test
+fixed_test
+benchmark_multithread_test
+benchmark_test

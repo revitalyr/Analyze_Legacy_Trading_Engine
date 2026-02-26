@@ -1,0 +1,29 @@
+{
+    "makefile.launchConfigurations": [
+
+        {
+            "cwd": "/Users/robertengels/cpp_orderbook/bin",
+            "binaryPath": "/Users/robertengels/cpp_orderbook/bin/exchange_test",
+            "binaryArgs": []
+        },
+        {
+            "cwd": "/Users/robertengels/cpp_orderbook/bin",
+            "binaryPath": "/Users/robertengels/cpp_orderbook/bin/orderbook_test",
+            "binaryArgs": []
+        }
+    ],
+    "boost-test-adapter-robaho.tests": [
+        {
+            "testExecutables": [
+                {
+                    "glob": "**/*{_test,_test.exe}"
+                }
+            ],
+            "debugConfig": "Test Config"
+        }
+    ],
+
+
+
+
+}
