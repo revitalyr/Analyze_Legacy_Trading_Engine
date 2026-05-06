@@ -3,12 +3,11 @@
 #include "core/insert_result.h"
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <iostream>
 
-// Mutex lock guard macro for consistent locking // Renamed to SCREAMING_SNAKE_CASE
 #define LOCK_EXCHANGE_MUTEX() std::lock_guard<std::mutex> lock(m_mu)
 
-// Get order details by exchange ID with thread-safe access
 std::optional<Order> Exchange::getOrder(ExchangeId exchangeId) const {
     auto order = m_allOrders.get(exchangeId);
     if (!order) return std::nullopt;
@@ -20,7 +19,6 @@ std::optional<Order> Exchange::getOrder(ExchangeId exchangeId) const {
     return std::optional<Order>(orderBook->getOrder(order));
 }
 
-// Get order book snapshot for specified instrument
 std::optional<Book> Exchange::getBook(std::string_view instrument) const {
     auto orderBook = m_books.getOrderBook(std::string(instrument));
     if (!orderBook) return std::nullopt;
@@ -29,11 +27,10 @@ std::optional<Book> Exchange::getBook(std::string_view instrument) const {
     return orderBook->getBook();
 }
 
-// Cancel order with session validation and thread safety
 CancelResult Exchange::cancelOrder(ExchangeId exchangeId, SessionIdView sessionId) {
     auto order = m_allOrders.get(exchangeId);
     if (!order) {
-        return false;
+        throw std::invalid_argument(std::string(EngineConstants::kOrderNotFound));
     }
     
     if (order->sessionId() != sessionId) {
@@ -52,9 +49,9 @@ CancelResult Exchange::cancelOrder(ExchangeId exchangeId, SessionIdView sessionI
 
 OrderResult Exchange::insertOrderInternal(
     SessionIdView sessionId,
-    std::string_view instrument,
-    F price,
-    int quantity,
+    InstrumentSymbolView instrument,
+    Price price,
+    Quantity quantity,
     Order::Side side,
     OrderIdStrView orderId
 ) {
@@ -68,8 +65,8 @@ OrderResult Exchange::insertOrderInternal(
         ExchangeId id = nextId();
         
         auto order = Order::create(
-            std::string(sessionId),
-            std::string(orderId),
+            sessionId,
+            orderId,
             orderBook->m_instrument,
             price,
             quantity,
@@ -87,7 +84,7 @@ OrderResult Exchange::insertOrderInternal(
             const auto& error = result.error();
             
             // Log error details
-            std::cerr << "[EXCHANGE ERROR] Order insertion failed: " << error.toString() << "\n";
+            std::cerr << EngineConstants::kExchangeErrorPrefix << EngineConstants::kOrderInsertionFailed << error.toString() << "\n";
             
             // Handle specific error types with configurable strategies
             switch (error.code) {
@@ -116,39 +113,39 @@ OrderResult Exchange::insertOrderInternal(
         
         return id;
     } catch (const std::exception& e) {
-        std::cerr << "[EXCHANGE ERROR] Exception in insertOrder: " << e.what() << "\n";
+        std::cerr << EngineConstants::kExchangeErrorPrefix << EngineConstants::kExceptionInInsertOrder << e.what() << "\n";
         return std::nullopt;
     }
 }
 
 OrderResult Exchange::placeBuyOrder(
-    std::string_view sessionId,
-    std::string_view instrument,
-    F price,
-    int quantity,
-    std::string_view orderId
+    SessionIdView sessionId,
+    InstrumentSymbolView instrument,
+    Price price,
+    Quantity quantity,
+    OrderIdStrView orderId
 ) {
     return insertOrderInternal(sessionId, instrument, price, quantity, Order::Side::BUY, orderId);
 }
 
 OrderResult Exchange::placeSellOrder(
-    std::string_view sessionId,
-    std::string_view instrument,
-    F price,
-    int quantity,
-    std::string_view orderId
+    SessionIdView sessionId,
+    InstrumentSymbolView instrument,
+    Price price,
+    Quantity quantity,
+    OrderIdStrView orderId
 ) {
     return insertOrderInternal(sessionId, instrument, price, quantity, Order::Side::SELL, orderId);
 }
 
 void Exchange::quote(
-    std::string_view sessionId,
-    std::string_view instrument,
-    F bidPrice,
-    int bidQuantity,
-    F askPrice,
-    int askQuantity,
-    std::string_view quoteId
+    SessionIdView sessionId,
+    InstrumentSymbolView instrument,
+    Price bidPrice,
+    Quantity bidQuantity,
+    Price askPrice,
+    Quantity askQuantity,
+    QuoteIdView quoteId
 ) {
     auto orderBook = m_books.getOrCreate(std::string(instrument), *this);
     auto bookGuard = orderBook->lock();
@@ -158,8 +155,8 @@ void Exchange::quote(
         std::string(quoteId),
         [&]() -> QuoteOrders {
             QuoteOrders result;
-            
-            if (bidQuantity > 0) {
+
+            if (bidQuantity > Quantity(0)) {
                 result.m_bid = Order::create(
                     std::string(sessionId),
                     std::string(quoteId),
@@ -172,7 +169,7 @@ void Exchange::quote(
                 m_allOrders.add(result.m_bid);
             }
             
-            if (askQuantity > 0) {
+            if (askQuantity > Quantity(0)) {
                 result.m_ask = Order::create(
                     std::string(sessionId),
                     std::string(quoteId),
@@ -192,8 +189,7 @@ void Exchange::quote(
     orderBook->quote(orders, bidPrice, bidQuantity, askPrice, askQuantity);
 }
 
-// C++26: Modern atomic ID generation // Renamed to camelCase
 ExchangeId Exchange::nextId() {
-    static std::atomic<ExchangeId> id = 0;
+    static std::atomic<ExchangeId> id = ExchangeId(0);
     return ++id;
 }

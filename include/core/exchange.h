@@ -1,3 +1,7 @@
+/**
+ * @file exchange.h
+ * @brief High-level Exchange interface coordinating multiple OrderBooks and global order tracking.
+ */
 #pragma once
 
 #include <string>
@@ -13,26 +17,40 @@
 #include "ordermap.h"
 #include "semantic_types.h"
 #include "constants.h"
+#include "engine_constants.h"
 
+/**
+ * @brief Interface for receiving asynchronous trade and order events from the Exchange.
+ */
 struct ExchangeListener {
-    /** callback when order properties change */
+    /** @brief Triggered whenever an order state changes (insertion, cancellation, etc.) */
     virtual void onOrder(const Order& ) {}
-    /** Callback when a trade occurs */
+    /** @brief Triggered when a match occurs between a bid and an ask */
     virtual void onTrade(const Trade& ) {}
 };
 
-inline ExchangeListener g_dummyListener; // A default listener for convenience
+/** @brief Global default listener that performs no actions. */
+inline ExchangeListener g_dummyListener;
 
-// Simplified result types for compatibility
 using OrderResult = std::optional<ExchangeId>;
 using CancelResult = bool;
 
+/**
+ * @class Exchange
+ * @brief The primary entry point for the trading engine.
+ * 
+ * Manages a collection of OrderBooks keyed by instrument and maintains a global 
+ * map of all active orders for efficient O(1) lookups and cancellations.
+ */
 class Exchange : OrderBookListener {
-public: // Public interface for the exchange
+public:
     Exchange() : m_listener(g_dummyListener) {}
     explicit Exchange(ExchangeListener& listener) : m_listener(listener) {}
     
-    // Simplified API using std::optional for now
+    /**
+     * @brief Places a limit buy order.
+     * @return The ExchangeId assigned to the order if successful, otherwise std::nullopt.
+     */
     OrderResult placeBuyOrder(
         SessionIdView sessionId,
         InstrumentSymbolView instrument,
@@ -41,15 +59,17 @@ public: // Public interface for the exchange
         OrderIdStrView orderId = ""
     );
     
+    /** @brief Places a market buy order at the highest possible execution priority. */
     OrderResult placeMarketBuyOrder(
         SessionIdView sessionId,
         InstrumentSymbolView instrument,
         Quantity quantity,
         OrderIdStrView orderId = ""
     ) {
-        return placeBuyOrder(sessionId, instrument, Price(kMarketBuyPrice), quantity, orderId); // Renamed to kPascalCase
+        return placeBuyOrder(sessionId, instrument, Price(kMarketBuyPrice), quantity, orderId);
     }
     
+    /** @brief Places a limit sell order. */
     OrderResult placeSellOrder(
         SessionIdView sessionId,
         InstrumentSymbolView instrument,
@@ -58,15 +78,19 @@ public: // Public interface for the exchange
         OrderIdStrView orderId = ""
     );
     
+    /** @brief Places a market sell order at the highest possible execution priority. */
     OrderResult placeMarketSellOrder(
         SessionIdView sessionId,
         InstrumentSymbolView instrument,
         Quantity quantity,
         OrderIdStrView orderId = ""
     ) {
-        return placeSellOrder(sessionId, instrument, Price(kMarketSellPrice), quantity, orderId); // Renamed to kPascalCase
+        return placeSellOrder(sessionId, instrument, Price(kMarketSellPrice), quantity, orderId);
     }
     
+    /**
+     * @brief Updates or creates a two-sided quote (bid/ask) for a session.
+     */
     void quote(
         SessionIdView sessionId,
         InstrumentSymbolView instrument,
@@ -77,46 +101,58 @@ public: // Public interface for the exchange
         QuoteIdView quoteId
     );
     
-    // Simplified error handling
+    /**
+     * @brief Cancels an existing order.
+     * @param exchangeId The ID returned by the initial placement.
+     * @param sessionId Validation session ID to ensure ownership.
+     * @return True if cancellation was successful.
+     */
     CancelResult cancelOrder(ExchangeId exchangeId, SessionIdView sessionId);
     
+    /** @brief Returns a snapshot of the order book for the given instrument. */
     std::optional<Book> getBook(InstrumentSymbolView instrument) const;
+    
+    /** @brief Retrieves a copy of an order's current state. */
     std::optional<Order> getOrder(ExchangeId exchangeId) const;
     
-    // Modern range-based API
+    /** @brief Range-based view of all tracked orders. */
     auto getAllOrders() const {
-        return m_allOrders.all() | std::views::transform([](const std::shared_ptr<const Order>& order) { return order; }); // Renamed to m_snake_case
+        return m_allOrders.all() | std::views::transform([](const std::shared_ptr<const Order>& order) { return order; });
     }
     
+    /** @brief Range-based view of all active instrument symbols. */
     auto getInstruments() const {
-        return m_books.instruments() | std::views::transform([](const InstrumentSymbol& instrument) { return instrument; }); // Renamed to m_snake_case
+        return m_books.instruments() | std::views::transform([](const InstrumentSymbol& instrument) { return instrument; });
     }
     
+    /** @internal Implementation of OrderBookListener interface */
     void onOrder(const Order& order) override {
-        m_listener.onOrder(order); // Renamed to m_snake_case
-    }
-    void onTrade(const Trade& trade) override {
-        m_listener.onTrade(trade); // Renamed to m_snake_case
-    }
-    Guard lock() { // Provides a lock guard for external synchronization
-        return Guard(m_mu); // Renamed to m_snake_case
+        m_listener.onOrder(order);
     }
     
-    // Legacy API for compatibility
-    std::vector<std::string> instruments() {
-        return m_books.instruments(); // Renamed to m_snake_case
+    /** @internal Implementation of OrderBookListener interface */
+    void onTrade(const Trade& trade) override {
+        m_listener.onTrade(trade);
+    }
+    
+    /** @brief Returns a synchronization guard for external transactional operations. */
+    Guard lock() {
+        return Guard(m_mu);
+    }
+    
+    std::vector<InstrumentSymbol> instruments() {
+        return m_books.instruments();
     }
     
     std::vector<std::shared_ptr<const Order>> orders() {
-        return m_allOrders.all(); // Renamed to m_snake_case
+        return m_allOrders.all();
     }
     
-private: // Internal state and helper methods
-    BookMap m_books; // Map of instrument symbols to order books
-    OrderMap m_allOrders; // Map of all active orders by ExchangeId
-    SpinLock m_mu; // Mutex for internal synchronization
+private:
+    BookMap m_books;
+    OrderMap m_allOrders;
+    SpinLock m_mu;
     
-    // C++26: Modern atomic ID generation
     ExchangeId nextId();
     
     OrderResult insertOrderInternal(

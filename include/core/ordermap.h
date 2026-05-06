@@ -21,7 +21,7 @@ public:
     OrderMap() {
         m_map.reserve(100000); // Reserve space for typical order count
     }
-
+    
     /**
      * Add order to map
      */
@@ -66,15 +66,15 @@ public:
     /**
      * Get all unique instruments
      */
-    std::vector<std::string> instruments() const {
+    std::vector<InstrumentSymbol> instruments() const {
         std::shared_lock lock(m_mutex); // Renamed to m_snake_case
-        std::unordered_set<std::string> unique_instruments;
+        std::unordered_set<InstrumentSymbol> unique_instruments;
         
         for (const auto& [id, order] : m_map) {
             unique_instruments.insert(order->instrument());
         }
         
-        return std::vector<std::string>(unique_instruments.begin(), unique_instruments.end()); // Renamed to camelCase
+        return std::vector<InstrumentSymbol>(unique_instruments.begin(), unique_instruments.end()); // Renamed to camelCase
     }
     
     /**
@@ -97,7 +97,7 @@ public:
      * Reserve space for expected order count
      */
     void reserve(size_t n) {
-        std::unique_lock lock(m_mutex); // Renamed to m_snake_case
-        m_map.reserve(n); // Renamed to m_snake_case
+        std::unique_lock lock(m_mutex);
+        m_map.reserve(n);
     }
 };

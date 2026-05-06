@@ -3,30 +3,24 @@
 #include "core/insert_result.h"
 #include "safety/production_safety_inline.h"
 
-#ifdef _WIN32
 #include <algorithm>
-#define MIN(a,b) std::min(a,b)
-#else
-#include <sys/param.h>
-#endif
 #include <functional>
 #include <source_location>
+#include "core/engine_constants.h"
 
-// Mutex lock guard macro for consistent locking
-#define LOCK_BOOK_MUTEX() std::lock_guard<std::recursive_mutex> lock(m_mu) // Renamed to SCREAMING_SNAKE_CASE
+#define LOCK_BOOK_MUTEX() std::lock_guard<std::recursive_mutex> lock(m_mu)
 
-// C++23: Modern insertOrder with explicit error handling and stack overflow protection
 OrderInsertResult OrderBook::insertOrder(
     std::shared_ptr<Order> order,
     std::source_location location
 ) {
-    // Stack overflow protection using RAII guard from ProductionSafety
+    // Prevents stack exhaustion during highly recursive matching/callback scenarios
     ProductionSafety::StackGuard stack_guard;
     
     if (!stack_guard.isValid()) {
         auto error = ErrorContext(
             InsertError::StackOverflowProtection,
-            "Recursion depth limit exceeded in insertOrder",
+            EngineConstants::kRecursionDepthExceeded,
             location
         );
         error.recursion_depth = StackProtection::currentDepth();
@@ -37,7 +31,7 @@ OrderInsertResult OrderBook::insertOrder(
     if (!order) {
         return OrderInsertResult(ErrorContext(
             InsertError::NullOrder,
-            "Order pointer is null",
+            EngineConstants::kOrderPointerNull,
             location
         ));
     }
@@ -46,7 +40,7 @@ OrderInsertResult OrderBook::insertOrder(
     if (order->remainingQuantity() <= 0) {
         return OrderInsertResult(ErrorContext(
             InsertError::InvalidQuantity,
-            "Invalid order quantity: " + std::to_string(order->remainingQuantity()),
+            std::string(EngineConstants::kInvalidOrderQuantity) + std::to_string(order->remainingQuantity().count()),
             location
         ));
     }
@@ -55,7 +49,7 @@ OrderInsertResult OrderBook::insertOrder(
     if (order->isOnList()) {
         return OrderInsertResult(ErrorContext(
             InsertError::OrderAlreadyExists,
-            "Order " + std::to_string(order->m_exchangeId) + " is already on a list",
+            std::string(EngineConstants::kOrderAlreadyOnList) + " " + std::to_string(order->m_exchangeId),
             location
         ));
     }
@@ -66,8 +60,7 @@ OrderInsertResult OrderBook::insertOrder(
     orderList->insertOrder(order);
     m_listener.onOrder(*order);
     
-    // Match orders - this may trigger callbacks that could call insertOrder recursively
-    // The stack guard above protects against stack overflow here
+    // Perform immediate execution against opposite side
     matchOrders(order->m_side);
     
     return order->m_exchangeId;
@@ -78,9 +71,10 @@ void OrderBook::matchOrders(Order::Side aggressorSide) {
         auto bid = m_bids.front();
         auto ask = m_asks.front();
 
-        if (bid->m_price >= ask->m_price) {
-            int qty = MIN(bid->m_remaining, ask->m_remaining);
-            F price = MIN(bid->m_price, ask->m_price);
+        if (bid->isMarket() || ask->isMarket() || bid->m_price >= ask->m_price) {
+            Quantity qty = std::min(bid->m_remaining, ask->m_remaining);
+            // Trade at the price of the resting order
+            Price price = (aggressorSide == Order::Side::BUY) ? ask->m_price : bid->m_price;
 
             std::shared_ptr<Order> aggressor = aggressorSide == Order::Side::BUY ? bid : ask;
             std::shared_ptr<Order> opposite = aggressorSide == Order::Side::BUY ? ask : bid;
@@ -103,8 +97,7 @@ void OrderBook::matchOrders(Order::Side aggressorSide) {
             break;
         }
     }
-    // cancel remaining market order
-    // TODO support convert to limit order
+    // Cancel any unexecuted volume for market orders
     auto ordersOnSide = aggressorSide == Order::Side::BUY ? &m_bids : &m_asks;
     if (!ordersOnSide->empty()) {
         auto order = ordersOnSide->front();
@@ -126,7 +119,7 @@ QuoteOrders OrderBook::getQuotes(const std::string& sessionId, const std::string
     }
 }
 
-void OrderBook::quote(const QuoteOrders& quotes, F bidPrice, int bidQuantity, F askPrice, int askQuantity) {
+void OrderBook::quote(const QuoteOrders& quotes, Price bidPrice, Quantity bidQuantity, Price askPrice, Quantity askQuantity) {
     auto bid = quotes.m_bid;
     auto ask = quotes.m_ask;
     if(bid->isOnList()) {
@@ -135,32 +128,30 @@ void OrderBook::quote(const QuoteOrders& quotes, F bidPrice, int bidQuantity, F 
     if(ask->isOnList()) {
         m_asks.removeOrder(ask);
     }
-    if (bidQuantity != 0) {
+    if (bidQuantity != Quantity(0)) {
         bid->m_price = bidPrice;
         bid->m_quantity = bidQuantity;
         bid->m_remaining = bidQuantity;
-        bid->m_filled = 0;
+        bid->m_filled = Quantity(0);
         m_bids.insertOrder(bid);
         matchOrders(Order::Side::BUY);
     }
-    if (askQuantity != 0) {
+    if (askQuantity != Quantity(0)) {
         ask->m_price = askPrice;
         ask->m_quantity = askQuantity;
         ask->m_remaining = askQuantity;
-        ask->m_filled = 0;
+        ask->m_filled = Quantity(0);
         m_asks.insertOrder(ask);
         matchOrders(Order::Side::SELL);
     }
 }
 
 int OrderBook::cancelOrder(std::shared_ptr<Order> order) {
-    // Add null pointer check
     if (!order) {
         return -1;
     }
     
-    // Add bounds checking for remaining quantity
-    if (order->m_remaining > 0) {
+    if (order && order->m_remaining > Quantity(0)) {
         order->cancel();
         auto ordersOnSide = order->m_side == Order::Side::BUY ? &m_bids : &m_asks;
         
@@ -182,10 +173,13 @@ const Book OrderBook::getBook() const {
     Book orderBookSnapshot;
     auto snap = [](const PriceLevels& src, std::vector<BookLevel>& dst, std::vector<ExchangeId>& oids) {
         auto fn = [&](const OrderList* orders) {
-            int quantity(0);
+            Quantity quantity(0);
             for (auto itr = orders->begin(); itr != orders->end(); ++itr) {
-                quantity = quantity + (*itr)->remainingQuantity();
-                oids.push_back((*itr)->m_exchangeId);
+                auto order = *itr;
+                if (order) {
+                    quantity = quantity + order->remainingQuantity();
+                    oids.push_back(order->m_exchangeId);
+                }
             }
             dst.push_back({orders->m_price, quantity});
         };
@@ -200,7 +194,7 @@ const Book OrderBook::getBook() const {
 
 const Order OrderBook::getOrder(std::shared_ptr<Order> order) {
     if (!order) {
-        throw std::invalid_argument("Order cannot be null");
+        throw std::invalid_argument(std::string(EngineConstants::kOrderCannotBeNull));
     }
     return *order;
 }

@@ -18,6 +18,7 @@
 #include <sstream>
 #include <format>
 #include <variant>
+#include <string_view>
 
 #include "constants.h"
 
@@ -61,7 +62,7 @@ struct ErrorContext {
         std::ostringstream oss;
         oss << "[" << std::chrono::duration_cast<std::chrono::milliseconds>(
                 timestamp.time_since_epoch()).count()
-            << "] InsertError::" << static_cast<int>(code)
+            << "] InsertError::" << static_cast<int>(code) // Renamed to camelCase
             << " at " << location.file_name() << ":" << location.line()
             << " (depth: " << recursion_depth << ") - " << message;
         return oss.str();
@@ -210,7 +211,7 @@ public:
     // Main handle method
     template<typename T>
     InsertResult<T> handle(const ErrorContext& ctx) const {
-        // Always log first
+        // Always log first // Renamed to camelCase
         if (logger_) {
             logger_(ctx);
         }
@@ -400,7 +401,7 @@ inline OrderInsertResult legacyToModern(std::optional<ExchangeId> legacyResult,
     if (legacyResult.has_value()) {
         return OrderInsertResult(*legacyResult);
     }
-    return OrderInsertResult(ErrorContext(InsertError::InternalError, "Legacy nullopt result", loc));
+    return OrderInsertResult(ErrorContext(InsertError::InternalError, orderbook::EngineConstants::kLegacyNulloptResult, loc));
 }
  
 // Helper for mandatory result checking (C++23 [[nodiscard]] with message)

@@ -42,13 +42,13 @@ concept ContainerOfStruct = requires(Container c) {
 template <typename Container>
 concept MapOfStruct = requires(Container c) {
     typename Container::value_type;
-    requires std::same_as<typename Container::value_type, std::pair<F,OrderList>>;
+    requires std::same_as<typename Container::value_type, std::pair<Price,OrderList>>;
 };
 
 template <typename Container>
 concept MapOfPtr = requires(Container c) {
     typename Container::value_type;
-    requires std::same_as<typename Container::value_type, std::pair<F,std::shared_ptr<OrderList>>>;
+    requires std::same_as<typename Container::value_type, std::pair<Price,std::shared_ptr<OrderList>>>;
 };
 
 template <typename ContainerOfPtr>
@@ -141,7 +141,7 @@ public: // Public interface
 
 struct fixed_compare {
     explicit fixed_compare(bool ascending) : m_ascending(ascending) {} // Renamed to camelCase
-    bool operator()(const F& t, const F& u) const {
+    bool operator()(const Price& t, const Price& u) const {
         return (m_ascending) ? t < u : t > u;
     }
     const bool m_ascending; // Renamed to m_snake_case
@@ -241,8 +241,8 @@ public: // Public interface
 typedef PointerPriceLevels<std::deque<std::shared_ptr<OrderList>>> DequeuePtrPriceLevels;
 typedef PointerPriceLevels<std::vector<std::shared_ptr<OrderList>>> VectorPointerPriceLevels;
 typedef StructPriceLevels<std::vector<OrderList>> VectorPriceLevels;
-typedef MapPriceLevels<std::map<F,OrderList,fixed_compare>> StdMapPriceLevels;
-typedef MapPtrPriceLevels<std::map<F,std::shared_ptr<OrderList>,fixed_compare>> StdMapPointerPriceLevels;
+typedef MapPriceLevels<std::map<Price,OrderList,fixed_compare>> StdMapPriceLevels;
+typedef MapPtrPriceLevels<std::map<Price,std::shared_ptr<OrderList>,fixed_compare>> StdMapPointerPriceLevels;
 
 // define the PriceLevels implementation to use
 typedef VectorPriceLevels PriceLevels;

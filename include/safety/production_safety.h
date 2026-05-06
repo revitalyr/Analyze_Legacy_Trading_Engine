@@ -23,7 +23,7 @@ public:
     // Configuration constants
     static constexpr int kMaxRecursionDepth = 50;
     static constexpr Duration kResetInterval{std::chrono::seconds{1}}; // Renamed to kPascalCase
-    static constexpr Duration kCooldownPeriod{std::chrono::seconds{30}}; // Renamed to kPascalCase
+    static constexpr Duration kCooldownPeriod{std::chrono::seconds{30}};
     static constexpr int kFailureThreshold = 10; // Renamed to kPascalCase
 
 private:

@@ -94,7 +94,7 @@ TEST_CASE("Exchange fill order", "[exchange]") {
 
     TestListener testListener;
 
-    TestExchange exchange;
+    TestExchange exchange(testListener);
 
     auto order1Id = exchange.placeBuyOrder(1.0, 10, "1");
 
@@ -110,7 +110,7 @@ TEST_CASE("Exchange fill order", "[exchange]") {
 TEST_CASE("Exchange partial fill", "[exchange]") {
 
     TestListener testListener;
-    TestExchange exchange;
+    TestExchange exchange(testListener);
 
     auto order1Id = exchange.placeBuyOrder(1.0, 20, "1");
 
@@ -134,11 +134,11 @@ TEST_CASE("Exchange cancel order", "[exchange]") {
 
     TestListener testListener;
 
-    TestExchange exchange;
+    TestExchange exchange(testListener);
 
     auto order1Id = exchange.placeBuyOrder(1.0, 20, "1");
-    REQUIRE(exchange.cancelOrder(order1Id.value(), "dummy"));
-    REQUIRE_FALSE(exchange.cancelOrder(order1Id.value(), "dummy"));
+    REQUIRE(exchange.cancelOrder(order1Id.value(), "session"));
+    REQUIRE_FALSE(exchange.cancelOrder(order1Id.value(), "session"));
 
     // should be an event for the order and the cancel
     REQUIRE(testListener.m_orders.size() == 2);
@@ -148,7 +148,7 @@ TEST_CASE("Exchange cancel order", "[exchange]") {
 TEST_CASE("Exchange cancel invalid", "[exchange]") {
 
     TestListener testListener;
-    TestExchange exchange;
+    TestExchange exchange(testListener);
 
     auto order1Id = exchange.placeBuyOrder(1.0, 20, "1");
     REQUIRE_THROWS(exchange.cancelOrder(order1Id.value() + 1, "dummy"));
@@ -158,7 +158,7 @@ TEST_CASE("Exchange market buy", "[exchange]") {
 
     TestListener testListener;
 
-    TestExchange exchange;
+    TestExchange exchange(testListener);
 
     exchange.placeSellOrder(1.0, 20, "1");
     exchange.placeMarketBuyOrder(10, "2");
@@ -173,7 +173,7 @@ TEST_CASE("Exchange market buy cancel remaining", "[exchange]") {
 
     TestListener testListener;
 
-    TestExchange exchange;
+    TestExchange exchange(testListener);
 
     exchange.placeSellOrder(1.0, 20, "1");
     exchange.placeMarketBuyOrder(30, "2");
@@ -188,7 +188,7 @@ TEST_CASE("Exchange market buy multi level", "[exchange]") {
 
     TestListener testListener;
 
-    TestExchange exchange;
+    TestExchange exchange(testListener);
 
     exchange.placeSellOrder(1.0, 20, "1");
     exchange.placeSellOrder(2.0, 20, "2");
@@ -208,7 +208,7 @@ TEST_CASE("Exchange market buy one sided", "[exchange]") {
 
     TestListener testListener;
 
-    TestExchange exchange;
+    TestExchange exchange(testListener);
 
     exchange.placeMarketBuyOrder(30, "1");
 
@@ -221,8 +221,7 @@ TEST_CASE("Exchange market buy one sided", "[exchange]") {
 TEST_CASE("Exchange order immutability", "[exchange]") {
 
     TestListener testListener;
-
-    TestExchange exchange;
+    TestExchange exchange(testListener);
 
     auto order1Id = exchange.placeBuyOrder(1.0, 30, "1");
     Order order = exchange.getOrder(order1Id.value()).value();

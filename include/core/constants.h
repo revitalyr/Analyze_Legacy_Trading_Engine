@@ -10,6 +10,7 @@
 #include <chrono>
 #include <cfloat>
 #include <cstddef>
+#include "fixed.h" // For Price type
 
 // ============================================================================
 // BUFFER AND COLLECTION LIMITS
@@ -51,11 +52,11 @@ constexpr std::chrono::seconds kResetInterval{60};
 /** Default instrument symbol for testing */
 constexpr const char* kDefaultInstrument = "SYM1";
 
-/** Price value representing market buy (infinity) */
-constexpr double kMarketBuyPrice = DBL_MAX;
+/** Price value representing market buy (large finite value for fixed-point safety) */
+constexpr Price kMarketBuyPrice = Price(1e9);
 
-/** Price value representing market sell (negative infinity) */
-constexpr double kMarketSellPrice = -DBL_MAX;
+/** Price value representing market sell (large negative value for fixed-point safety) */
+constexpr Price kMarketSellPrice = Price(-1e9);
 
 // ============================================================================
 // STRING INTERNER CONSTANTS

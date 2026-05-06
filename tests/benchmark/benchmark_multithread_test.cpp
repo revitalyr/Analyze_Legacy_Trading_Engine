@@ -17,16 +17,16 @@
 const std::string dummy_oid = "oid";
 
 void insertOrders(const bool withTrades) {
-    static const int N_THREADS=std::thread::hardware_concurrency();
+    static const ObjectCount N_THREADS = static_cast<ObjectCount>(std::thread::hardware_concurrency());
     static std::array<std::string,16> instruments;
 
-    for(int i=0;i<N_THREADS;i++) instruments[i] = "i"+std::to_string(i+1);
+    for(ObjectCount i=0; i<N_THREADS; i++) instruments[i] = "i"+std::to_string(i+1);
 
-    static const int N_ORDERS = 250000;
-    static const int TOTAL_ORDERS = N_ORDERS * 2 * N_THREADS;
+    static const ObjectCount N_ORDERS = 250000;
+    static const ObjectCount TOTAL_ORDERS = N_ORDERS * 2 * N_THREADS;
 
     struct MyExchangeListener : public ExchangeListener {
-        std::atomic<long> tradeCount = 0;
+        std::atomic<ExecutionId> tradeCount{0};
         void onTrade(const Trade& trade) override {
             tradeCount++;
         }
@@ -35,11 +35,11 @@ void insertOrders(const bool withTrades) {
     Exchange exchange(listener);
     const std::string session("dummy");
     auto fn = [&exchange,session,withTrades](const std::string &instrument) {
-        for(int i=0;i<N_ORDERS;i++) {
-            exchange.buy(session,instrument,5000.0 + 1 * (i%1000),10,"");
+        for(ObjectCount i=0; i<N_ORDERS; i++) {
+            exchange.placeBuyOrder(session, instrument, Price(5000.0 + 1 * (i%1000)), Quantity(10), "");
         }
-        for(int i=0;i<N_ORDERS;i++) {
-            exchange.sell(session,instrument,(withTrades ? 5000.0 : 10000.0) + 1 * (i%1000),10,"");
+        for(ObjectCount i=0; i<N_ORDERS; i++) {
+            exchange.placeSellOrder(session, instrument, Price((withTrades ? 5000.0 : 10000.0) + 1 * (i%1000)), Quantity(10), "");
         }
     };
 
@@ -74,7 +74,7 @@ void cancelOrders() {
 
     struct MyExchangeListener : public ExchangeListener {
         std::atomic<long> tradeCount = 0;
-        void onTrade(const Trade& trade) override {
+        void onTrade(const Trade& /*trade*/) override {
             tradeCount++;
         }
     } listener;
@@ -82,9 +82,9 @@ void cancelOrders() {
     Exchange exchange(listener);
     const std::string session("dummy");
 
-    for(int t=0;t<N_THREADS;t++) {
-        for(int i=0;i<N_ORDERS;i++) {
-            auto oid = exchange.buy(session,instruments[t], 100.0 + 1 * (i%1000), 10, dummy_oid);
+    for(ObjectCount t=0; t<N_THREADS; t++) {
+        for(ObjectCount i=0; i<N_ORDERS; i++) {
+            auto oid = exchange.placeBuyOrder(session, instruments[t], Price(100.0 + 1 * (i%1000)), Quantity(10), dummy_oid);
             oids[t][i]=oid.value();
         }
     }
@@ -92,20 +92,20 @@ void cancelOrders() {
     std::random_device rd;
     std::mt19937 g(rd());
 
-    for(int t=0;t<N_THREADS;t++) {
+    for(ObjectCount t=0; t<N_THREADS; t++) {
         std::shuffle(std::begin(oids[t]),std::end(oids[t]),g);
     }
 
     auto start = std::chrono::system_clock::now();
     std::vector<std::thread> threads;
 
-    auto fn = [&](const int tid) {
-        for(int i=0;i<N_ORDERS;i++) {
-            exchange.cancel(oids[tid][i],session);
+    auto fn = [&](const ObjectCount tid) {
+        for(ObjectCount i=0; i<N_ORDERS; i++) {
+            exchange.cancelOrder(oids[tid][i],session);
         }
     };
 
-    for(int i=0;i<N_THREADS;i++) {
+    for(ObjectCount i=0; i<N_THREADS; i++) {
         threads.push_back(std::thread(fn,i));
     }
 

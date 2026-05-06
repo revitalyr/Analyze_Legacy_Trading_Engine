@@ -58,6 +58,17 @@ private:
  * - Compact Side enum (1 byte)
  * - Aligned for cache efficiency
  */
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4324) // structure was padded due to alignment specifier
+#endif
+/**
+ * @struct Order
+ * @brief Highly optimized order representation designed for cache-line alignment.
+ * 
+ * Members are ordered to minimize padding and group frequently accessed hot data.
+ * Uses StringInterning to reduce session and instrument IDs to 32-bit integers.
+ */
 struct alignas(64) Order {
 public:
     enum class Side : uint8_t { BUY = 0, SELL = 1 };
@@ -72,7 +83,6 @@ public:
     template<typename> friend class MapPriceLevels;
     template<typename> friend class MapPtrPriceLevels;
 
-    // Public factory method - creates shared_ptr for consistent memory management
     static std::shared_ptr<Order> create(
         SessionIdView sessionId,
         OrderIdStrView orderId,
@@ -86,32 +96,29 @@ public:
     }
 
 private:
-    /** Used to enqueue Order in OrderMap - raw pointer for lock-free list */
-    std::atomic<Order*> m_nextPtr{nullptr}; // Renamed to m_snake_case
+    std::shared_ptr<Node> m_node; 
     
-    /** Holds Node in OrderList for quick removal */
-    std::shared_ptr<Node> m_node; // Renamed to m_snake_case
+    std::atomic<Order*> m_nextPtr{nullptr};
     
-    /** Timestamp when order was submitted to the exchange */
-    const SubmissionTime m_timeSubmitted; // Renamed to m_snake_case
+    const SubmissionTime m_timeSubmitted;
+    ExchangeId m_orderIdNum = ExchangeId(0);
 
-    // Compact numeric fields
-    Quantity m_remaining = 0; // Remaining quantity of the order // Renamed to m_snake_case
-    Quantity m_filled = 0; // Quantity already filled // Renamed to m_snake_case
-    Quantity m_quantity = 0; // Original quantity of the order // Renamed to m_snake_case
-    Quantity m_cumulativeQuantity = 0; // Cumulative quantity filled // Renamed to m_snake_case
-    
-    Price m_price; // Limit price of the order // Renamed to m_snake_case
-    Price m_averagePrice = 0; // Average filled price // Renamed to m_snake_case
+    Price m_price;
+    Price m_averagePrice = Price(0);
+    Quantity m_remaining = Quantity(0);
+    Quantity m_filled = Quantity(0);
+    Quantity m_quantity = Quantity(0);
+    Quantity m_cumulativeQuantity = Quantity(0);
 
-    // String interning IDs (4 bytes each vs 32+ bytes for std::string)
-    StringInterner::StringId m_sessionId = StringInterner::INVALID_ID; // Interned session ID // Renamed to m_snake_case
-    StringInterner::StringId m_orderId = StringInterner::INVALID_ID; // Interned order ID // Renamed to m_snake_case
-    StringInterner::StringId m_instrumentId = StringInterner::INVALID_ID; // Interned instrument ID // Renamed to m_snake_case
-    
-    // Original numeric identifier for orderId (if numeric ID is used)
-    ExchangeId m_orderIdNum = 0; // Renamed to m_snake_case
+    StringInterner::StringId m_sessionId = StringInterner::INVALID_ID;
+    StringInterner::StringId m_orderId = StringInterner::INVALID_ID;
+    StringInterner::StringId m_instrumentId = StringInterner::INVALID_ID;
 
+public:
+    const ExchangeId m_exchangeId;
+    const Side m_side;
+    bool m_isQuote = false;
+private:
     void fill(Quantity quantity, Price price) { 
         m_remaining -= quantity; // Renamed to m_snake_case
         m_filled += quantity;  // Renamed to m_snake_case
@@ -119,7 +126,7 @@ private:
         m_cumulativeQuantity += quantity; // Renamed to m_snake_case
     }
     
-    void cancel() { m_remaining = 0; } // Sets remaining quantity to 0 // Renamed to m_snake_case
+    void cancel() { m_remaining = Quantity(0); } // Sets remaining quantity to 0 // Renamed to m_snake_case
     
     bool isMarket() const { // Renamed to camelCase
         return m_price == kMarketBuyPrice || m_price == kMarketSellPrice; // Renamed to m_snake_case, kPascalCase
@@ -144,9 +151,6 @@ public:
     
     ExchangeId orderIdNum() const { return m_orderIdNum; } // Renamed to m_snake_case
     
-    const ExchangeId m_exchangeId; // Unique ID assigned by the exchange // Renamed to m_snake_case
-    const Side m_side; // Side of the order (BUY/SELL) // Renamed to m_snake_case
-
     Price price() const { return m_price; } // Returns the limit price // Renamed to m_snake_case
     Quantity quantity() const { return m_quantity; } // Returns the original quantity // Renamed to m_snake_case
 
@@ -160,22 +164,20 @@ public:
     Price averagePrice() const { return m_averagePrice; } // Average price of filled quantity // Renamed to m_snake_case
     
     bool isCancelled() const { // Renamed to camelCase
-        return m_remaining == 0 && m_filled != m_quantity; // Renamed to m_snake_case
+        return m_remaining == Quantity(0) && m_filled != m_quantity; // Renamed to m_snake_case
     }
     
     bool isFilled() const { // Renamed to camelCase
-        return m_remaining == 0 && m_filled == m_quantity; // Renamed to m_snake_case
+        return m_remaining == Quantity(0) && m_filled == m_quantity; // Renamed to m_snake_case
     }
     
     bool isPartiallyFilled() const { // Renamed to camelCase
-        return m_remaining == 0 && m_filled > 0; // Renamed to m_snake_case
+        return m_remaining == Quantity(0) && m_filled > Quantity(0); // Renamed to m_snake_case
     }
     
     bool isActive() const { // Renamed to camelCase
         return m_remaining > 0; // Renamed to m_snake_case
     }
-    
-    bool m_isQuote = false; // Flag indicating if this order is part of a quote // Renamed to m_snake_case
 
     // Copy constructor - atomic next is not copied (initialized to nullptr)
     Order(const Order& other)
@@ -212,7 +214,7 @@ protected:
           m_side(side) // Renamed to m_snake_case
     {
         // Try to parse orderId as number for efficiency
-        try {
+        try { // Renamed to camelCase
             m_orderIdNum = std::stoll(std::string(orderId)); // Renamed to m_snake_case
         } catch (...) {
             m_orderId = g_globalStringInterner().intern(orderId); // Renamed to m_snake_case, g_camelCase
@@ -220,3 +222,6 @@ protected:
         }
     }
 };
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif

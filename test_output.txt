@@ -1,9 +1,0 @@
-Running 14 test cases...
-Entering test module "exchange"
-exchange_test.cpp(17): Entering test case "insertOrder_buy"
-unknown location(0): fatal error: in "insertOrder_buy": stack overflow
-exchange_test.cpp(17): last checkpoint: "insertOrder_buy" test entry
-Test is aborted
-exchange_test.cpp(17): Leaving test case "insertOrder_buy"; testing time: 1426us
-Test is aborted
-Leaving test module "exchange"

@@ -1,56 +1,33 @@
-# 🔄 Smart Pointer Migration Guide
+# Smart Pointer Migration Technical Specification
 
-## 🎯 Overview
+## Scope
+The migration refactors the engine from raw pointer memory management to a modern C++20 smart pointer ownership model. This addresses memory safety, automated resource reclamation, and atomic reference counting.
 
-This document describes the comprehensive migration from raw pointers to smart pointers in the C++ Order Book trading engine. The migration enhances memory safety, thread safety, and modern C++ compliance while maintaining high performance.
+## Architectural Transformation
 
-## 📋 Migration Summary
-
-### Before Migration
-- Raw pointers (`Order*`, `Node*`)
-- Manual memory management
-- Potential memory leaks and dangling pointers
-- Limited thread safety guarantees
-
-### After Migration
-- Smart pointers (`std::shared_ptr`, `std::weak_ptr`)
-- Automatic memory management via RAII
-- Eliminated memory leaks and dangling pointers
-- Enhanced thread safety with atomic operations
-
-## 🏗️ Architecture Changes
-
-### Core Data Structures
-
-#### Node Class
+### 1. Data Structure Reconfiguration
 ```cpp
-// Before
-class Node {
-private:
-    Node* prev = nullptr;
-    Node* next = nullptr;
-    Order* order = nullptr;
-};
+/* Legacy Implementation */
+class Node { Node *prev, *next; Order *order; };
 
-// After
+/* Refactored Implementation (C++20) */
 class Node {
-private:
     std::shared_ptr<Node> prev = nullptr;
     std::shared_ptr<Node> next = nullptr;
     std::weak_ptr<Order> order;  // weak_ptr to avoid circular references
 };
 ```
 
-#### Order Management
-```cpp
-// Before
-Order* createOrder(...) {
-    Order* order = new Order(...);
-    return order;
-}
+#### Order Management (Factory Method)
+Orders are now exclusively created via a static factory method, ensuring proper `std::shared_ptr` encapsulation from inception.
 
-// After
-static std::shared_ptr<Order> create(...) {
+```cpp
+// Current Implementation
+struct Order {
+    // ...
+public:
+    // Public factory method
+    static std::shared_ptr<Order> create(...) {
     return std::shared_ptr<Order>(new Order(...));
 }
 ```

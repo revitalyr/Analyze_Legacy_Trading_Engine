@@ -10,6 +10,7 @@
 #include "orderbook.h"
 #include "semantic_types.h"
 #include "constants.h"
+#include "engine_constants.h"
 
 // Simplified result types for compatibility
 using OrderResult = std::optional<ExchangeId>;
@@ -17,7 +18,8 @@ using OrderResult = std::optional<ExchangeId>;
 // C++26: Modern test utilities with smart pointers
 class TestExchange : public Exchange {
 public:
-    TestExchange() : Exchange() {}
+    TestExchange() : Exchange(g_dummyListener) {}
+    explicit TestExchange(ExchangeListener& listener) : Exchange(listener) {}
     
     // Simplified API for testing with default instrument
     OrderResult placeBuyOrder(SessionIdView sessionId, Price price, Quantity quantity, OrderIdStrView orderId = "") {
@@ -29,7 +31,7 @@ public:
     }
     
     OrderResult placeMarketBuyOrder(SessionIdView sessionId, Quantity quantity, OrderIdStrView orderId = "") {
-        return Exchange::placeMarketBuyOrder(sessionId, kDefaultInstrument, quantity, orderId);
+        return placeBuyOrder(sessionId, Price(kMarketBuyPrice), quantity, orderId);
     }
     
     OrderResult placeMarketSellOrder(SessionIdView sessionId, Quantity quantity, OrderIdStrView orderId = "") {
@@ -38,16 +40,16 @@ public:
     
     // API Overloads for legacy test compatibility
     OrderResult placeBuyOrder(Price price, Quantity quantity, OrderIdStrView orderId = "") {
-        return placeBuyOrder("session", price, quantity, orderId);
+        return placeBuyOrder(EngineConstants::kTestSessionId, price, quantity, orderId);
     }
     OrderResult placeSellOrder(Price price, Quantity quantity, OrderIdStrView orderId = "") {
-        return placeSellOrder("session", price, quantity, orderId);
+        return placeSellOrder(EngineConstants::kTestSessionId, price, quantity, orderId);
     }
     OrderResult placeMarketBuyOrder(Quantity quantity, OrderIdStrView orderId = "") {
-        return placeMarketBuyOrder("session", quantity, orderId);
+        return placeMarketBuyOrder(EngineConstants::kTestSessionId, quantity, orderId);
     }
     OrderResult placeMarketSellOrder(Quantity quantity, OrderIdStrView orderId = "") {
-        return placeMarketSellOrder("session", quantity, orderId);
+        return placeMarketSellOrder(EngineConstants::kTestSessionId, quantity, orderId);
     }
 
     // Verification Helpers
@@ -76,9 +78,6 @@ public:
         return getAllOrders()
             | std::views::filter([sessionId](const auto& order) { return order->sessionId() == sessionId; });
     }
-    
-private:
-    ExchangeListener m_listener; // Renamed to m_snake_case
 };
 
 // C++26: Modern TestOrder with smart pointers and factory methods
@@ -106,12 +105,17 @@ public:
             exchange_id
         );
     }
+
+    // Factory method for legacy benchmarks (4 arguments)
+    static std::shared_ptr<TestOrder> create(ExchangeId id, Price price, Quantity quantity, Order::Side side) {
+        return std::make_shared<TestOrder>(id, price, quantity, side);
+    }
     
     // Legacy constructors for compatibility
-    TestOrder(ExchangeId id, Price price, Quantity quantity, Order::Side side)
-        : Order("session", std::to_string(id), kDefaultInstrument, price, quantity, side, id) {}
+    TestOrder(ExchangeId id, Price price, Quantity quantity, Order::Side side) // Renamed to camelCase
+        : Order(EngineConstants::kTestSessionId, std::to_string(id), kDefaultInstrument, price, quantity, side, id) {}
     
-    TestOrder(
+    TestOrder( // Renamed to camelCase
         OrderIdStrView orderId,
         ExchangeId id,
         Price price,
@@ -119,7 +123,7 @@ public:
         Order::Side side
     ) : Order("session", std::string(orderId), kDefaultInstrument, price, quantity, side, id) {} // Renamed to kPascalCase
     
-    TestOrder(
+    TestOrder( // Renamed to camelCase
         SessionIdView sessionId,
         OrderIdStrView orderId,
         Price price,
