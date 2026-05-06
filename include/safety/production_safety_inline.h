@@ -14,40 +14,40 @@
 
 class ProductionSafety {
 private:
-    static inline std::atomic<bool> safety_enabled{true};
-    static inline std::atomic<int> failure_count{0};
-    static inline std::atomic<std::chrono::steady_clock::time_point> last_failure_time{
+    static inline std::atomic<bool> s_safetyEnabled{true}; // Flag to enable/disable safety features
+    static inline std::atomic<int> s_failureCount{0}; // Counter for consecutive failures
+    static inline std::atomic<std::chrono::steady_clock::time_point> s_lastFailureTime{
         std::chrono::steady_clock::now()
     };
     
-    static constexpr int MAX_RECURSION_DEPTH = 50;
-    static constexpr std::chrono::seconds RESET_INTERVAL{1};
-    static constexpr std::chrono::seconds COOLDOWN_PERIOD{30};
-    static constexpr int FAILURE_THRESHOLD = 10;
+    static constexpr int kMaxRecursionDepth = 50;
+    static constexpr std::chrono::seconds kResetInterval{1};
+    static constexpr std::chrono::seconds kCooldownPeriod{30};
+    static constexpr int kFailureThreshold = 10;
 
 public:
     // ====================================================================
-    // Thread-local state (единый источник истины для глубины рекурсии)
+    // Thread-local state (single source of truth for recursion depth)
     // ====================================================================
     struct ThreadLocalState {
-        int recursion_depth = 0;
-        std::chrono::steady_clock::time_point last_reset = std::chrono::steady_clock::now();
+        int m_recursionDepth = 0;
+        std::chrono::steady_clock::time_point m_lastResetTime = std::chrono::steady_clock::now();
     };
     
     [[nodiscard]] static inline ThreadLocalState& threadState() noexcept {
         thread_local ThreadLocalState state;
         return state;
     }
-
+ 
     // ====================================================================
     // Configuration
     // ====================================================================
     static inline void enableSafety(bool enabled = true) noexcept {
-        safety_enabled.store(enabled, std::memory_order_relaxed);
+        s_safetyEnabled.store(enabled, std::memory_order_relaxed);
     }
     
     [[nodiscard]] static inline bool isTestMode() noexcept {
-        return !safety_enabled.load(std::memory_order_relaxed);
+        return !s_safetyEnabled.load(std::memory_order_relaxed);
     }
 
     // ====================================================================
@@ -59,14 +59,14 @@ public:
         auto& state = threadState();
         const auto now = std::chrono::steady_clock::now();
         
-        // Периодический сброс для предотвращения permanent lockout
-        if (now - state.last_reset > RESET_INTERVAL) {
-            state.recursion_depth = 0;
-            state.last_reset = now;
+        // Periodic reset to prevent permanent lockout
+        if (now - state.m_lastResetTime > kResetInterval) {
+            state.m_recursionDepth = 0;
+            state.m_lastResetTime = now;
         }
         
-        if (++state.recursion_depth > MAX_RECURSION_DEPTH) {
-            state.recursion_depth = 0;  // сброс для восстановления
+        if (++state.m_recursionDepth > kMaxRecursionDepth) {
+            state.m_recursionDepth = 0;  // reset for recovery
             return false;
         }
         return true;
@@ -76,49 +76,49 @@ public:
         if (isTestMode()) return;
         
         auto& state = threadState();
-        if (state.recursion_depth > 0) {
-            --state.recursion_depth;
+        if (state.m_recursionDepth > 0) {
+            --state.m_recursionDepth;
         }
     }
-
+ 
     // ====================================================================
     // RAII Guard
     // ====================================================================
     class StackGuard {
     public:
-        StackGuard() noexcept : valid_(enterCriticalOperation()) {}
+        StackGuard() noexcept : m_isValid(enterCriticalOperation()) {}
         
         ~StackGuard() noexcept {
-            if (valid_) {
+            if (m_isValid) {
                 exitCriticalOperation();
             }
         }
         
-        // Не копируется, не перемещается
+        // Not copyable, not movable
         StackGuard(const StackGuard&) = delete;
         StackGuard& operator=(const StackGuard&) = delete;
         StackGuard(StackGuard&&) = delete;
         StackGuard& operator=(StackGuard&&) = delete;
         
-        [[nodiscard]] bool isValid() const noexcept { return valid_; }
+        [[nodiscard]] bool isValid() const noexcept { return m_isValid; }
         
     private:
-        bool valid_;
+        bool m_isValid;
     };
-
+ 
     // ====================================================================
     // Circuit breaker
     // ====================================================================
     [[nodiscard]] static inline bool circuitBreakerAllow() noexcept {
-        if (!safety_enabled.load(std::memory_order_relaxed)) return true;
+        if (!s_safetyEnabled.load(std::memory_order_relaxed)) return true;
         
-        const int failures = failure_count.load(std::memory_order_relaxed);
-        if (failures > FAILURE_THRESHOLD) {
-            const auto last = last_failure_time.load(std::memory_order_relaxed);
+        const int failures = s_failureCount.load(std::memory_order_relaxed);
+        if (failures > kFailureThreshold) {
+            const auto last = s_lastFailureTime.load(std::memory_order_relaxed);
             const auto now = std::chrono::steady_clock::now();
             
-            if (now - last > COOLDOWN_PERIOD) {
-                failure_count.store(0, std::memory_order_relaxed);
+            if (now - last > kCooldownPeriod) {
+                s_failureCount.store(0, std::memory_order_relaxed);
                 return true;
             }
             return false;  // Circuit open
@@ -127,34 +127,33 @@ public:
     }
     
     static inline void recordFailure() noexcept {
-        failure_count.fetch_add(1, std::memory_order_relaxed);
-        last_failure_time.store(std::chrono::steady_clock::now(), std::memory_order_relaxed);
+        s_failureCount.fetch_add(1, std::memory_order_relaxed);
+        s_lastFailureTime.store(std::chrono::steady_clock::now(), std::memory_order_relaxed);
     }
     
     static inline void recordSuccess() noexcept {
-        int expected = failure_count.load(std::memory_order_relaxed);
+        int expected = s_failureCount.load(std::memory_order_relaxed);
         while (expected > 0) {
-            if (failure_count.compare_exchange_weak(
-                    expected, expected - 1, 
+            if (s_failureCount.compare_exchange_weak(
+                    expected, expected - 1,
                     std::memory_order_relaxed, std::memory_order_relaxed)) {
                 break;
             }
         }
     }
 };
-
 // ====================================================================
-// Macros (безопасные для Boost.Test)
+// Macros (safe for Boost.Test)
 // ====================================================================
 
-#define CRITICAL_OPERATION_GUARD \
-    ProductionSafety::StackGuard __stack_guard_local; \
-    if (!__stack_guard_local.isValid()) { \
+#define CRITICAL_OPERATION_GUARD_RAII \
+    ProductionSafety::StackGuard stackGuardLocal; \
+    if (!stackGuardLocal.isValid()) { \
         ProductionSafety::recordFailure(); \
         return; /* graceful early return instead of throw */ \
     }
 
-#define CIRCUIT_BREAKER_GUARD \
+#define CIRCUIT_BREAKER_CHECK \
     if (!ProductionSafety::circuitBreakerAllow()) { \
         ProductionSafety::recordFailure(); \
         return; /* graceful early return */ \

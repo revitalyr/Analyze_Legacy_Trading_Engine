@@ -1,0 +1,3 @@
+Running 1 test case...
+unknown location(0): fatal error: in "ordermap_basic": stack overflow
+ordermap_test.cpp(7): last checkpoint: "ordermap_basic" test entry

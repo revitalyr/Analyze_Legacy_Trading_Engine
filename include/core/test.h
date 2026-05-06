@@ -8,62 +8,94 @@
 
 #include "exchange.h"
 #include "orderbook.h"
+#include "semantic_types.h"
+#include "constants.h"
 
 // Simplified result types for compatibility
-using OrderResult = std::optional<long>;
+using OrderResult = std::optional<ExchangeId>;
 
 // C++26: Modern test utilities with smart pointers
 class TestExchange : public Exchange {
 public:
-    TestExchange() : Exchange(listener) {}
+    TestExchange() : Exchange() {}
     
-    // Simplified API using std::optional
-    OrderResult buy(std::string_view sessionId, F price, int quantity, std::string_view orderId = "") {
-        return Exchange::buy(sessionId, "SYM1", price, quantity, orderId);
+    // Simplified API for testing with default instrument
+    OrderResult placeBuyOrder(SessionIdView sessionId, Price price, Quantity quantity, OrderIdStrView orderId = "") {
+        return Exchange::placeBuyOrder(sessionId, kDefaultInstrument, price, quantity, orderId);
     }
     
-    OrderResult sell(std::string_view sessionId, F price, int quantity, std::string_view orderId = "") {
-        return Exchange::sell(sessionId, "SYM1", price, quantity, orderId);
+    OrderResult placeSellOrder(SessionIdView sessionId, Price price, Quantity quantity, OrderIdStrView orderId = "") {
+        return Exchange::placeSellOrder(sessionId, kDefaultInstrument, price, quantity, orderId);
     }
     
-    OrderResult marketBuy(std::string_view sessionId, int quantity, std::string_view orderId = "") {
-        return Exchange::marketBuy(sessionId, "SYM1", quantity, orderId);
+    OrderResult placeMarketBuyOrder(SessionIdView sessionId, Quantity quantity, OrderIdStrView orderId = "") {
+        return Exchange::placeMarketBuyOrder(sessionId, kDefaultInstrument, quantity, orderId);
     }
     
-    OrderResult marketSell(std::string_view sessionId, int quantity, std::string_view orderId = "") {
-        return Exchange::marketSell(sessionId, "SYM1", quantity, orderId);
+    OrderResult placeMarketSellOrder(SessionIdView sessionId, Quantity quantity, OrderIdStrView orderId = "") {
+        return Exchange::placeMarketSellOrder(sessionId, kDefaultInstrument, quantity, orderId);
     }
     
+    // API Overloads for legacy test compatibility
+    OrderResult placeBuyOrder(Price price, Quantity quantity, OrderIdStrView orderId = "") {
+        return placeBuyOrder("session", price, quantity, orderId);
+    }
+    OrderResult placeSellOrder(Price price, Quantity quantity, OrderIdStrView orderId = "") {
+        return placeSellOrder("session", price, quantity, orderId);
+    }
+    OrderResult placeMarketBuyOrder(Quantity quantity, OrderIdStrView orderId = "") {
+        return placeMarketBuyOrder("session", quantity, orderId);
+    }
+    OrderResult placeMarketSellOrder(Quantity quantity, OrderIdStrView orderId = "") {
+        return placeMarketSellOrder("session", quantity, orderId);
+    }
+
+    // Verification Helpers
+    int bidCount() const { return static_cast<int>(Exchange::getBook(kDefaultInstrument).value().m_bids.size()); }
+    int askCount() const { return static_cast<int>(Exchange::getBook(kDefaultInstrument).value().m_asks.size()); }
+    
+    int bidIndex(ExchangeId id) const {
+        auto ids = Exchange::getBook(kDefaultInstrument).value().m_bidOrderIds; // Renamed to m_snake_case
+        auto it = std::find(ids.begin(), ids.end(), id);
+        return it == ids.end() ? -1 : static_cast<int>(std::distance(ids.begin(), it));
+    }
+    
+    int askIndex(ExchangeId id) const {
+        auto ids = Exchange::getBook(kDefaultInstrument).value().m_askOrderIds; // Renamed to m_snake_case
+        auto it = std::find(ids.begin(), ids.end(), id);
+        return it == ids.end() ? -1 : static_cast<int>(std::distance(ids.begin(), it));
+    }
+
     // C++26: Modern range-based queries
     auto getOrdersBySide(Order::Side side) const {
         return getAllOrders() 
-            | std::views::filter([side](const auto& order) { return order->side == side; });
+            | std::views::filter([side](const auto& order) { return order->m_side == side; }); // Renamed to m_snake_case
     }
     
-    auto getOrdersBySession(std::string_view sessionId) const {
+    auto getOrdersBySession(SessionIdView sessionId) const {
         return getAllOrders()
             | std::views::filter([sessionId](const auto& order) { return order->sessionId() == sessionId; });
     }
     
 private:
-    ExchangeListener listener;
+    ExchangeListener m_listener; // Renamed to m_snake_case
 };
 
 // C++26: Modern TestOrder with smart pointers and factory methods
 class TestOrder : public Order {
 public:
     // C++26: Factory methods returning smart pointers
-    static std::shared_ptr<TestOrder> create(long id, F price, int quantity, Order::Side side) {
+    static std::shared_ptr<TestOrder> createOrder(ExchangeId id, Price price, Quantity quantity, Order::Side side) {
         return std::make_shared<TestOrder>(id, price, quantity, side);
     }
     
     static std::shared_ptr<TestOrder> create(
-        std::string_view sessionId,
-        std::string_view orderId,
-        F price,
-        int quantity,
+        SessionIdView sessionId,
+        OrderIdStrView orderId,
+        Price price,
+        Quantity quantity,
         Order::Side side,
-        long exchangeId
+        ExchangeId exchange_id
     ) {
         return std::make_shared<TestOrder>(
             std::string(sessionId),
@@ -71,52 +103,52 @@ public:
             price,
             quantity,
             side,
-            exchangeId
+            exchange_id
         );
     }
     
     // Legacy constructors for compatibility
-    TestOrder(long id, F price, int quantity, Order::Side side) 
-        : Order("session", std::to_string(id), "SYM1", price, quantity, side, id) {}
+    TestOrder(ExchangeId id, Price price, Quantity quantity, Order::Side side)
+        : Order("session", std::to_string(id), kDefaultInstrument, price, quantity, side, id) {}
     
     TestOrder(
-        std::string_view orderId,
-        long id,
-        F price,
-        int quantity,
+        OrderIdStrView orderId,
+        ExchangeId id,
+        Price price,
+        Quantity quantity,
         Order::Side side
-    ) : Order("session", std::string(orderId), "SYM1", price, quantity, side, id) {}
+    ) : Order("session", std::string(orderId), kDefaultInstrument, price, quantity, side, id) {} // Renamed to kPascalCase
     
     TestOrder(
-        std::string_view sessionId,
-        std::string_view orderId,
-        F price,
-        int quantity,
+        SessionIdView sessionId,
+        OrderIdStrView orderId,
+        Price price,
+        Quantity quantity,
         Order::Side side,
-        long exchangeId
-    ) : Order(std::string(sessionId), std::string(orderId), "SYM1", price, quantity, side, exchangeId) {}
+        ExchangeId exchange_id
+    ) : Order(std::string(sessionId), std::string(orderId), kDefaultInstrument, price, quantity, side, exchange_id) {} // Renamed to kPascalCase
 };
 
 // C++26: Modern test utilities
 namespace TestUtils {
     // Create a test order book with smart pointers
     inline std::unique_ptr<OrderBook> createTestOrderBook(OrderBookListener& listener) {
-        return std::make_unique<OrderBook>("TEST", listener);
+        return std::make_unique<OrderBook>(kDefaultInstrument, listener);
     }
     
     // Helper to validate order book state
     inline bool validateOrderBook(const OrderBook& book) {
-        auto book_snapshot = book.book();
-        return !book_snapshot.bids.empty() || !book_snapshot.asks.empty();
+        auto bookSnapshot = book.getBook(); // Renamed to camelCase
+        return !bookSnapshot.m_bids.empty() || !bookSnapshot.m_asks.empty(); // Renamed to m_snake_case
     }
     
     // C++26: Range-based order validation
     inline auto validateOrders(std::ranges::range auto orders) {
         return std::ranges::all_of(orders, [](const auto& order) {
-            return order && order->remaining > 0;
+            return order && order->remainingQuantity() > 0; // Renamed to camelCase
         });
     }
 }
 
-// C++26: Constants for testing
-inline constexpr std::string_view dummy_instrument = "SYM1";
+// C++20: Constants for testing
+inline const std::string kDummyInstrument = kDefaultInstrument; // Renamed to kPascalCase

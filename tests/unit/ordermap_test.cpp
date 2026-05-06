@@ -1,20 +1,20 @@
-#include <gtest/gtest.h>
+#include <catch2/catch_test_macros.hpp>
 
 #include "core/order.h"
 #include "core/test.h"
 
-TEST(OrderMapTest, OrderMapBasic) {
-    OrderMap map;
+TEST_CASE("OrderMap basic operations", "[ordermap]") {
+    OrderMap orderMap; // Renamed to camelCase
 
-    auto o = new TestOrder(1, 100, 10, Order::BUY);
-    EXPECT_EQ(map.get(1), nullptr);
+    auto order = std::make_shared<TestOrder>(1, 100, 10, Order::Side::BUY); // Renamed to camelCase
+    REQUIRE(orderMap.get(1) == nullptr); // Renamed to camelCase
 
-    map.add(o);
-    EXPECT_EQ(map.get(1), o);
+    orderMap.add(order); // Renamed to camelCase
+    REQUIRE(orderMap.get(1) == order); // Renamed to camelCase
     
     // Test that we can retrieve the order we just added
-    auto retrieved = map.get(1);
-    EXPECT_EQ(retrieved, o);
-    ASSERT_NE(retrieved, nullptr);
-    EXPECT_EQ(retrieved->exchangeId, 1);
+    auto retrievedOrder = orderMap.get(1); // Renamed to camelCase
+    REQUIRE(retrievedOrder == order); // Renamed to camelCase
+    REQUIRE(retrievedOrder != nullptr); // Renamed to camelCase
+    REQUIRE(retrievedOrder->m_exchangeId == 1); // Renamed to m_snake_case
 }

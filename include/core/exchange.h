@@ -11,120 +11,122 @@
 #include "bookmap.h"
 #include "spinlock.h"
 #include "ordermap.h"
+#include "semantic_types.h"
+#include "constants.h"
 
 struct ExchangeListener {
     /** callback when order properties change */
-    virtual void onOrder(const Order& order) {}
-    /** callback when trade occurs */
-    virtual void onTrade(const Trade& trade) {}
+    virtual void onOrder(const Order& ) {}
+    /** Callback when a trade occurs */
+    virtual void onTrade(const Trade& ) {}
 };
 
-static ExchangeListener dummy;
+inline ExchangeListener g_dummyListener; // A default listener for convenience
 
 // Simplified result types for compatibility
-using OrderResult = std::optional<long>;
+using OrderResult = std::optional<ExchangeId>;
 using CancelResult = bool;
 
 class Exchange : OrderBookListener {
-public:
-    Exchange() : listener(dummy) {}
-    explicit Exchange(ExchangeListener& listener) : listener(listener) {}
+public: // Public interface for the exchange
+    Exchange() : m_listener(g_dummyListener) {}
+    explicit Exchange(ExchangeListener& listener) : m_listener(listener) {}
     
     // Simplified API using std::optional for now
-    OrderResult buy(
-        std::string_view sessionId,
-        std::string_view instrument,
-        F price,
-        int quantity,
-        std::string_view orderId = ""
+    OrderResult placeBuyOrder(
+        SessionIdView sessionId,
+        InstrumentSymbolView instrument,
+        Price price,
+        Quantity quantity,
+        OrderIdStrView orderId = ""
     );
     
-    OrderResult marketBuy(
-        std::string_view sessionId,
-        std::string_view instrument,
-        int quantity,
-        std::string_view orderId = ""
+    OrderResult placeMarketBuyOrder(
+        SessionIdView sessionId,
+        InstrumentSymbolView instrument,
+        Quantity quantity,
+        OrderIdStrView orderId = ""
     ) {
-        return buy(sessionId, instrument, F(DBL_MAX), quantity, orderId);
+        return placeBuyOrder(sessionId, instrument, Price(kMarketBuyPrice), quantity, orderId); // Renamed to kPascalCase
     }
     
-    OrderResult sell(
-        std::string_view sessionId,
-        std::string_view instrument,
-        F price,
-        int quantity,
-        std::string_view orderId = ""
+    OrderResult placeSellOrder(
+        SessionIdView sessionId,
+        InstrumentSymbolView instrument,
+        Price price,
+        Quantity quantity,
+        OrderIdStrView orderId = ""
     );
     
-    OrderResult marketSell(
-        std::string_view sessionId,
-        std::string_view instrument,
-        int quantity,
-        std::string_view orderId = ""
+    OrderResult placeMarketSellOrder(
+        SessionIdView sessionId,
+        InstrumentSymbolView instrument,
+        Quantity quantity,
+        OrderIdStrView orderId = ""
     ) {
-        return sell(sessionId, instrument, F(-DBL_MAX), quantity, orderId);
+        return placeSellOrder(sessionId, instrument, Price(kMarketSellPrice), quantity, orderId); // Renamed to kPascalCase
     }
     
     void quote(
-        std::string_view sessionId,
-        std::string_view instrument,
-        F bidPrice,
-        int bidQuantity,
-        F askPrice,
-        int askQuantity,
-        std::string_view quoteId
+        SessionIdView sessionId,
+        InstrumentSymbolView instrument,
+        Price bidPrice,
+        Quantity bidQuantity,
+        Price askPrice,
+        Quantity askQuantity,
+        QuoteIdView quoteId
     );
     
     // Simplified error handling
-    CancelResult cancel(long exchangeId, std::string_view sessionId);
+    CancelResult cancelOrder(ExchangeId exchangeId, SessionIdView sessionId);
     
-    std::optional<Book> book(std::string_view instrument) const;
-    std::optional<Order> getOrder(long exchangeId) const;
+    std::optional<Book> getBook(InstrumentSymbolView instrument) const;
+    std::optional<Order> getOrder(ExchangeId exchangeId) const;
     
     // Modern range-based API
     auto getAllOrders() const {
-        return allOrders.all() | std::views::transform([](const std::shared_ptr<const Order>& order) { return order; });
+        return m_allOrders.all() | std::views::transform([](const std::shared_ptr<const Order>& order) { return order; }); // Renamed to m_snake_case
     }
     
     auto getInstruments() const {
-        return books.instruments() | std::views::transform([](const std::string& instrument) { return instrument; });
+        return m_books.instruments() | std::views::transform([](const InstrumentSymbol& instrument) { return instrument; }); // Renamed to m_snake_case
     }
     
     void onOrder(const Order& order) override {
-        listener.onOrder(order);
+        m_listener.onOrder(order); // Renamed to m_snake_case
     }
     void onTrade(const Trade& trade) override {
-        listener.onTrade(trade);
+        m_listener.onTrade(trade); // Renamed to m_snake_case
     }
-    Guard lock() {
-        return Guard(mu);
+    Guard lock() { // Provides a lock guard for external synchronization
+        return Guard(m_mu); // Renamed to m_snake_case
     }
     
     // Legacy API for compatibility
     std::vector<std::string> instruments() {
-        return books.instruments();
+        return m_books.instruments(); // Renamed to m_snake_case
     }
     
     std::vector<std::shared_ptr<const Order>> orders() {
-        return allOrders.all();
+        return m_allOrders.all(); // Renamed to m_snake_case
     }
     
-private:
-    BookMap books;
-    OrderMap allOrders;
-    SpinLock mu;
+private: // Internal state and helper methods
+    BookMap m_books; // Map of instrument symbols to order books
+    OrderMap m_allOrders; // Map of all active orders by ExchangeId
+    SpinLock m_mu; // Mutex for internal synchronization
     
     // C++26: Modern atomic ID generation
-    long nextID();
+    ExchangeId nextId();
     
-    OrderResult insertOrder(
-        std::string_view sessionId,
-        std::string_view instrument,
-        F price,
-        int quantity,
+    OrderResult insertOrderInternal(
+        SessionIdView sessionId,
+        InstrumentSymbolView instrument,
+        Price price,
+        Quantity quantity,
         Order::Side side,
-        std::string_view orderId
+        OrderIdStrView orderId
     );
     
-    ExchangeListener& listener;
+    ExchangeListener& m_listener; // Reference to the external listener
 };

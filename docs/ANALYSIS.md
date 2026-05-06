@@ -7,7 +7,7 @@
 - **Default compiler**: clang++ (C++20)
 - **Alternative**: GCC via Makefile.gcc
 - **No Windows support**: No MSVC configuration
-- **External dependency**: cpp_fixed library required at `../cpp_fixed`
+- **External dependency**: cpp_fixed library included as git submodule in `external/cpp_fixed`
 - **Testing**: Boost Unit Testing Framework required
 
 ### Dependencies
@@ -29,7 +29,7 @@ cpp_orderbook/
 ## Observations
 
 ### 1. Build Environment Issues
-- **Hardcoded dependency path**: `../cpp_fixed` - not reproducible
+- **Hardcoded dependency path**: Fixed - now using git submodule at `external/cpp_fixed`
 - **No CMake**: Modern build system missing
 - **Platform-specific**: Only Unix-like systems supported
 - **Missing dependency management**: No package manager integration
@@ -60,7 +60,7 @@ cpp_orderbook/
 ## Critical Issues
 
 ### Build Reproducibility
-1. **External dependency location**: Hardcoded `../cpp_fixed` path
+1. **External dependency location**: Fixed - using git submodule at `external/cpp_fixed`
 2. **Missing dependency specification**: No version pinning
 3. **Platform limitations**: No Windows/MSVC support
 4. **Toolchain assumptions**: Requires clang++ or GCC

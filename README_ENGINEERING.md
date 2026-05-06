@@ -78,7 +78,7 @@ git clone https://github.com/robaho/cpp_fixed.git
 ```makefile
 # GNU Make only
 CXX = clang++
-INCLUDES = -I ../cpp_fixed
+INCLUDES = -I external/cpp_fixed
 # Hardcoded paths
 # No Windows support
 # Manual dependency management
@@ -118,7 +118,7 @@ vcpkg integration
 
 ### Legacy Code Challenges
 1. **Platform assumptions** (Unix-only headers)
-2. **Hardcoded dependencies** (../cpp_fixed path)
+2. **Fixed**: Now using git submodule (external/cpp_fixed)
 3. **Missing build systems** (Makefile only)
 4. **No deployment strategy**
 

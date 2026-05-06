@@ -1,5 +1,5 @@
 #include <iostream>
-#include "../cpp_fixed/fixed.h"
+#include "external/cpp_fixed/fixed.h"
 
 int main() {
     Fixed<7> f1("1");

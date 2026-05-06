@@ -21,22 +21,22 @@ public:
     using Duration = std::chrono::steady_clock::duration;
     
     // Configuration constants
-    static constexpr int s_maxRecursionDepth = 50;
-    static constexpr Duration s_resetInterval{std::chrono::seconds{1}};
-    static constexpr Duration s_cooldownPeriod{std::chrono::seconds{30}};
-    static constexpr int s_failureThreshold = 10;
+    static constexpr int kMaxRecursionDepth = 50;
+    static constexpr Duration kResetInterval{std::chrono::seconds{1}}; // Renamed to kPascalCase
+    static constexpr Duration kCooldownPeriod{std::chrono::seconds{30}}; // Renamed to kPascalCase
+    static constexpr int kFailureThreshold = 10; // Renamed to kPascalCase
 
 private:
     // Thread-local state for recursion tracking
     struct ThreadLocalState {
-        int m_recursionDepth{0};
-        TimePoint m_lastReset{std::chrono::steady_clock::now()};
+        int m_recursionDepth{0}; // Renamed to m_snake_case
+        TimePoint m_lastResetTime{std::chrono::steady_clock::now()}; // Renamed to m_snake_case
     };
     
     // Atomic state for circuit breaker
-    static inline std::atomic<bool> s_safetyEnabled{true};
-    static inline std::atomic<int> s_failureCount{0};
-    static inline std::atomic<TimePoint> s_lastFailureTime{
+    static inline std::atomic<bool> s_safetyEnabled{true}; // Renamed to s_snake_case
+    static inline std::atomic<int> s_failureCount{0}; // Renamed to s_snake_case
+    static inline std::atomic<TimePoint> s_lastFailureTime{ // Renamed to s_snake_case
         std::chrono::steady_clock::now()
     };
     
@@ -65,13 +65,13 @@ public:
         const auto now = std::chrono::steady_clock::now();
         
         // Periodic reset to prevent permanent lockout
-        if (now - state.m_lastReset > s_resetInterval) {
-            state.m_recursionDepth = 0;
-            state.m_lastReset = now;
+        if (now - state.m_lastResetTime > kResetInterval) { // Renamed to m_snake_case, kPascalCase
+            state.m_recursionDepth = 0; // Renamed to m_snake_case
+            state.m_lastResetTime = now; // Renamed to m_snake_case
         }
         
-        if (++state.m_recursionDepth > s_maxRecursionDepth) {
-            state.m_recursionDepth = 0;  // Reset for recovery
+        if (++state.m_recursionDepth > kMaxRecursionDepth) { // Renamed to m_snake_case, kPascalCase
+            state.m_recursionDepth = 0;  // Reset for recovery // Renamed to m_snake_case
             return false;
         }
         return true;
@@ -83,18 +83,18 @@ public:
         }
         
         auto& state = getThreadState();
-        if (state.m_recursionDepth > 0) {
-            --state.m_recursionDepth;
+        if (state.m_recursionDepth > 0) { // Renamed to m_snake_case
+            --state.m_recursionDepth; // Renamed to m_snake_case
         }
     }
 
     // RAII Guard for critical operations
     class CriticalGuard {
     public:
-        CriticalGuard() noexcept : m_isValid(enterCriticalOperation()) {}
+        CriticalGuard() noexcept : m_isValid(enterCriticalOperation()) {} // Renamed to m_snake_case, camelCase
         
         ~CriticalGuard() noexcept {
-            if (m_isValid) {
+            if (m_isValid) { // Renamed to m_snake_case
                 exitCriticalOperation();
             }
         }
@@ -108,7 +108,7 @@ public:
         [[nodiscard]] bool isValid() const noexcept { return m_isValid; }
         
     private:
-        bool m_isValid;
+        bool m_isValid; // Renamed to m_snake_case
     };
 
     // Circuit breaker implementation
@@ -118,11 +118,11 @@ public:
         }
         
         const int failures = s_failureCount.load(std::memory_order_relaxed);
-        if (failures > s_failureThreshold) {
+        if (failures > kFailureThreshold) { // Renamed to kPascalCase
             const auto lastFailure = s_lastFailureTime.load(std::memory_order_relaxed);
             const auto now = std::chrono::steady_clock::now();
             
-            if (now - lastFailure > s_cooldownPeriod) {
+            if (now - lastFailure > kCooldownPeriod) { // Renamed to kPascalCase
                 s_failureCount.store(0, std::memory_order_relaxed);
                 return true;
             }
@@ -169,8 +169,8 @@ public:
 
 // Modern macros with safer behavior
 #define PRODUCTION_CRITICAL_GUARD \
-    ProductionSafety::CriticalGuard __guard_local; \
-    if (!__guard_local.isValid()) { \
+    ProductionSafety::CriticalGuard guardLocal; \
+    if (!guardLocal.isValid()) { \
         ProductionSafety::recordFailure(); \
         return; /* graceful early return */ \
     }
@@ -201,7 +201,7 @@ namespace ProductionSafetyUtils {
     
     template<typename Func>
     requires std::invocable<Func>
-    [[nodiscard]] inline auto safeExecute(Func&& func) noexcept 
+    [[nodiscard]] inline auto safeExecute(Func&& func) noexcept
         -> std::invoke_result_t<Func> {
         using ReturnType = std::invoke_result_t<Func>;
         

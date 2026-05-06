@@ -1,25 +1,25 @@
-#include <gtest/gtest.h>
+#include <catch2/catch_test_macros.hpp>
 
 #include <thread>
 #include <vector>
 
 #include "core/spinlock.h"
 
-TEST(SpinLockTest, SpinlockBasic) {
+TEST_CASE("SpinLock basic operations", "[spinlock]") {
     SpinLock lock;
 
     {
         Guard guard(lock);
-        EXPECT_FALSE(lock.try_lock());
-        EXPECT_TRUE(lock.is_locked());
+        REQUIRE_FALSE(lock.tryLock());
+        REQUIRE(lock.isLocked());
     }
-    EXPECT_FALSE(lock.is_locked());
-    EXPECT_TRUE(lock.try_lock());
+    REQUIRE_FALSE(lock.isLocked());
+    REQUIRE(lock.tryLock());
     lock.unlock();
-    EXPECT_TRUE(lock.try_lock());
+    REQUIRE(lock.tryLock());
 }
 
-TEST(SpinLockTest, SpinlockMultithread) {
+TEST_CASE("SpinLock multithreaded", "[spinlock]") {
     SpinLock lock;
 
     std::vector<std::thread> threads;
@@ -46,5 +46,5 @@ TEST(SpinLockTest, SpinlockMultithread) {
         thread->join();
     }
 
-    EXPECT_EQ(count, 2000000);
+    REQUIRE(count == 2000000);
 }

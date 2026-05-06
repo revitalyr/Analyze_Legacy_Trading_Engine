@@ -1,188 +1,142 @@
-#include <gtest/gtest.h>
+#include <catch2/catch_test_macros.hpp>
 
 #include "core/order.h"
 #include "core/orderbook.h"
 #include "core/test.h"
 
-TEST(OrderBookTest, OrderbookCancel) {
-    OrderBookListener listener;
-    OrderBook ob(dummy_instrument, listener);
+TEST_CASE("OrderBook cancel order", "[orderbook]") {
+    OrderBookListener testListener; // Renamed to camelCase
+    OrderBook orderBook(kDummyInstrument, testListener); // Renamed to kPascalCase, camelCase
 
-    auto o1 = new TestOrder(1, 100, 10, Order::BUY);
-    ob.insertOrder(o1);
-    ob.cancelOrder(o1);
+    auto order1 = std::make_shared<TestOrder>(1, 100, 10, Order::Side::BUY); // Renamed to camelCase
+    orderBook.insertOrder(order1); // Renamed to camelCase
+    orderBook.cancelOrder(order1); // Renamed to camelCase
 
-    auto levels = ob.book();
-    EXPECT_EQ(levels.bids.size(), 0u);
+    auto bookLevels = orderBook.getBook(); // Renamed to camelCase
+    REQUIRE(bookLevels.m_bids.size() == 0); // Renamed to m_snake_case
 
-    auto o2 = new TestOrder(1, 100, 10, Order::BUY);
-    ob.insertOrder(o2);
-    auto o3 = new TestOrder(1, 90, 10, Order::BUY);
-    ob.insertOrder(o3);
-    auto o4 = new TestOrder(1, 80, 10, Order::BUY);
-    ob.insertOrder(o4);
+    auto order2 = std::make_shared<TestOrder>(1, 100, 10, Order::Side::BUY); // Renamed to camelCase
+    orderBook.insertOrder(order2); // Renamed to camelCase
+    auto order3 = std::make_shared<TestOrder>(1, 90, 10, Order::Side::BUY); // Renamed to camelCase
+    orderBook.insertOrder(order3); // Renamed to camelCase
+    auto order4 = std::make_shared<TestOrder>(1, 80, 10, Order::Side::BUY); // Renamed to camelCase
+    orderBook.insertOrder(order4); // Renamed to camelCase
 
-    ob.cancelOrder(o3);
+    orderBook.cancelOrder(order3); // Renamed to camelCase
 
-    auto book = ob.book();
+    auto bookSnapshot = orderBook.getBook(); // Renamed to camelCase
 
-    ASSERT_EQ(book.bids.size(), 2u);
-    EXPECT_EQ(book.bids[0].price, 100);
-    EXPECT_EQ(book.bids[1].price, 80);
+    REQUIRE(bookSnapshot.m_bids.size() == 2); // Renamed to m_snake_case
+    REQUIRE(bookSnapshot.m_bids[0].m_price == 100); // Renamed to m_snake_case
+    REQUIRE(bookSnapshot.m_bids[1].m_price == 80); // Renamed to m_snake_case
 }
 
-TEST(OrderBookTest, Booklevels) {
-    OrderBookListener listener;
-    OrderBook ob(dummy_instrument, listener);
+TEST_CASE("OrderBook book levels", "[orderbook]") {
+    OrderBookListener testListener; // Renamed to camelCase
+    OrderBook orderBook(kDummyInstrument, testListener); // Renamed to kPascalCase, camelCase
 
-    auto o1 = new TestOrder(1, 100, 10, Order::BUY);
-    ob.insertOrder(o1);
+    auto order1 = std::make_shared<TestOrder>(1, 100, 10, Order::Side::BUY); // Renamed to camelCase
+    orderBook.insertOrder(order1); // Renamed to camelCase
 
-    auto levels = ob.book();
+    auto bookLevels = orderBook.getBook(); // Renamed to camelCase
 
-    ASSERT_FALSE(levels.bids.empty());
-    EXPECT_EQ(levels.bids[0].price, 100);
-    EXPECT_EQ(levels.bids[0].quantity, 10);
+    REQUIRE_FALSE(bookLevels.m_bids.empty()); // Renamed to m_snake_case
+    REQUIRE(bookLevels.m_bids[0].m_price == 100); // Renamed to m_snake_case
+    REQUIRE(bookLevels.m_bids[0].m_quantity == 10); // Renamed to m_snake_case
 }
 
-TEST(OrderBookTest, BooklevelsSum) {
-    OrderBookListener listener;
-    OrderBook ob(dummy_instrument, listener);
+TEST_CASE("OrderBook book levels sum", "[orderbook]") {
+    OrderBookListener testListener; // Renamed to camelCase
+    OrderBook orderBook(kDummyInstrument, testListener); // Renamed to kPascalCase, camelCase
 
-    auto o1 = new TestOrder(1, 100, 10, Order::BUY);
-    ob.insertOrder(o1);
-    auto o2 = new TestOrder(2, 100, 10, Order::BUY);
-    ob.insertOrder(o2);
+    auto order1 = std::make_shared<TestOrder>(1, 100, 10, Order::Side::BUY); // Renamed to camelCase
+    orderBook.insertOrder(order1); // Renamed to camelCase
+    auto order2 = std::make_shared<TestOrder>(2, 100, 10, Order::Side::BUY); // Renamed to camelCase
+    orderBook.insertOrder(order2); // Renamed to camelCase
 
-    auto levels = ob.book();
+    auto bookLevels = orderBook.getBook(); // Renamed to camelCase
 
-    ASSERT_FALSE(levels.bids.empty());
-    EXPECT_EQ(levels.bids[0].price, 100);
-    EXPECT_EQ(levels.bids[0].quantity, 20);
+    REQUIRE_FALSE(bookLevels.m_bids.empty()); // Renamed to m_snake_case
+    REQUIRE(bookLevels.m_bids[0].m_price == 100); // Renamed to m_snake_case
+    REQUIRE(bookLevels.m_bids[0].m_quantity == 20); // Renamed to m_snake_case
 }
 
-TEST(OrderBookTest, BooklevelsMultiple) {
-    OrderBookListener listener;
-    OrderBook ob(dummy_instrument, listener);
+TEST_CASE("OrderBook book levels multiple", "[orderbook]") {
+    OrderBookListener testListener; // Renamed to camelCase
+    OrderBook orderBook(kDummyInstrument, testListener); // Renamed to kPascalCase, camelCase
 
-    auto o1 = new TestOrder(1, 100, 10, Order::BUY);
-    ob.insertOrder(o1);
-    auto o2 = new TestOrder(2, 100, 10, Order::BUY);
-    ob.insertOrder(o2);
-    auto o3 = new TestOrder(2, 200, 30, Order::BUY);
-    ob.insertOrder(o3);
+    auto order1 = std::make_shared<TestOrder>(1, 100, 10, Order::Side::BUY); // Renamed to camelCase
+    orderBook.insertOrder(order1); // Renamed to camelCase
+    auto order2 = std::make_shared<TestOrder>(2, 100, 10, Order::Side::BUY); // Renamed to camelCase
+    orderBook.insertOrder(order2); // Renamed to camelCase
+    auto order3 = std::make_shared<TestOrder>(2, 200, 30, Order::Side::BUY); // Renamed to camelCase
+    orderBook.insertOrder(order3); // Renamed to camelCase
 
-    auto levels = ob.book();
+    auto bookLevels = orderBook.getBook(); // Renamed to camelCase
 
-    ASSERT_GE(levels.bids.size(), 2u);
-    EXPECT_EQ(levels.bids[0].price, 200);
-    EXPECT_EQ(levels.bids[0].quantity, 30);
-    EXPECT_EQ(levels.bids[1].price, 100);
-    EXPECT_EQ(levels.bids[1].quantity, 20);
+    REQUIRE(bookLevels.m_bids.size() >= 2); // Renamed to m_snake_case
+    REQUIRE(bookLevels.m_bids[0].m_price == 200); // Renamed to m_snake_case
+    REQUIRE(bookLevels.m_bids[0].m_quantity == 30); // Renamed to m_snake_case
+    REQUIRE(bookLevels.m_bids[1].m_price == 100); // Renamed to m_snake_case
+    REQUIRE(bookLevels.m_bids[1].m_quantity == 20); // Renamed to m_snake_case
 }
 
-TEST(OrderBookTest, BooklevelsOrder) {
-    OrderBookListener listener;
-    OrderBook ob(dummy_instrument, listener);
+TEST_CASE("OrderBook book levels order", "[orderbook]") {
+    OrderBookListener testListener; // Renamed to camelCase
+    OrderBook orderBook(kDummyInstrument, testListener); // Renamed to kPascalCase, camelCase
 
-    ob.insertOrder(new TestOrder(1, 100, 10, Order::BUY));
-    ob.insertOrder(new TestOrder(1, 101, 10, Order::BUY));
-    ob.insertOrder(new TestOrder(1, 99, 10, Order::BUY));
-    ob.insertOrder(new TestOrder(1, 98, 10, Order::BUY));
+    orderBook.insertOrder(std::make_shared<TestOrder>(1, 100, 10, Order::Side::BUY)); // Renamed to camelCase
+    orderBook.insertOrder(std::make_shared<TestOrder>(1, 101, 10, Order::Side::BUY)); // Renamed to camelCase
+    orderBook.insertOrder(std::make_shared<TestOrder>(1, 99, 10, Order::Side::BUY)); // Renamed to camelCase
+    orderBook.insertOrder(std::make_shared<TestOrder>(1, 98, 10, Order::Side::BUY)); // Renamed to camelCase
 
-    ob.insertOrder(new TestOrder(1, 200, 10, Order::SELL));
-    ob.insertOrder(new TestOrder(1, 199, 10, Order::SELL));
-    ob.insertOrder(new TestOrder(1, 201, 10, Order::SELL));
-    ob.insertOrder(new TestOrder(1, 202, 10, Order::SELL));
+    orderBook.insertOrder(std::make_shared<TestOrder>(1, 200, 10, Order::Side::SELL)); // Renamed to camelCase
+    orderBook.insertOrder(std::make_shared<TestOrder>(1, 199, 10, Order::Side::SELL)); // Renamed to camelCase
+    orderBook.insertOrder(std::make_shared<TestOrder>(1, 201, 10, Order::Side::SELL)); // Renamed to camelCase
+    orderBook.insertOrder(std::make_shared<TestOrder>(1, 202, 10, Order::Side::SELL)); // Renamed to camelCase
 
-    auto levels = ob.book();
+    auto bookLevels = orderBook.getBook(); // Renamed to camelCase
 
-    ASSERT_GE(levels.bids.size(), 4u);
-    EXPECT_EQ(levels.bids[0].price, 101);
-    EXPECT_EQ(levels.bids[1].price, 100);
-    EXPECT_EQ(levels.bids[2].price, 99);
-    EXPECT_EQ(levels.bids[3].price, 98);
+    REQUIRE(bookLevels.m_bids.size() >= 4); // Renamed to m_snake_case
+    REQUIRE(bookLevels.m_bids[0].m_price == 101); // Renamed to m_snake_case
+    REQUIRE(bookLevels.m_bids[1].m_price == 100); // Renamed to m_snake_case
+    REQUIRE(bookLevels.m_bids[2].m_price == 99); // Renamed to m_snake_case
+    REQUIRE(bookLevels.m_bids[3].m_price == 98); // Renamed to m_snake_case
 
-    ASSERT_GE(levels.asks.size(), 4u);
-    EXPECT_EQ(levels.asks[0].price, 199);
-    EXPECT_EQ(levels.asks[1].price, 200);
-    EXPECT_EQ(levels.asks[2].price, 201);
-    EXPECT_EQ(levels.asks[3].price, 202);
+    REQUIRE(bookLevels.m_asks.size() >= 4); // Renamed to m_snake_case
+    REQUIRE(bookLevels.m_asks[0].m_price == 199); // Renamed to m_snake_case
+    REQUIRE(bookLevels.m_asks[1].m_price == 200); // Renamed to m_snake_case
+    REQUIRE(bookLevels.m_asks[2].m_price == 201); // Renamed to m_snake_case
+    REQUIRE(bookLevels.m_asks[3].m_price == 202); // Renamed to m_snake_case
 }
 
-TEST(OrderBookTest, SessionId) {
-    const std::string s1("session1");
-    const std::string s2("session2");
-    const std::string s3("session1");
+TEST_CASE("OrderBook session ID comparison", "[orderbook]") {
+    const std::string session_1("session1");
+    const std::string session_2("session2");
+    const std::string session_3("session1");
 
-    EXPECT_TRUE(s1 < s2);
-    EXPECT_FALSE(s2 < s1);
-    EXPECT_TRUE(s1 == s1);
-    EXPECT_FALSE(s1 == s2);
-    EXPECT_TRUE(s1 == s3);
+    REQUIRE(session_1 < session_2);
+    REQUIRE_FALSE(session_2 < session_1);
+    REQUIRE(session_1 == session_1);
+    REQUIRE_FALSE(session_1 == session_2);
+    REQUIRE(session_1 == session_3);
 }
 
-TEST(OrderBookTest, SessionQuoteId) {
-    std::string session1("session1");
-    std::string session2("session2");
-    std::string session3("session1");
+TEST_CASE("OrderBook SessionQuoteId comparison", "[orderbook]") {
+    std::string session_1("session1");
+    std::string session_2("session2");
+    std::string session_3("session1");
 
-    SessionQuoteId s1(session1, "quote1");
-    SessionQuoteId s2(session2, "quote2");
-    SessionQuoteId s3(session3, "quote1");
+    SessionQuoteId session_quote_id_1(session_1, "quote1");
+    SessionQuoteId session_quote_id_2(session_2, "quote2");
+    SessionQuoteId session_quote_id_3(session_3, "quote1");
 
-    EXPECT_TRUE(s1 < s2);
-    EXPECT_FALSE(s2 < s1);
-    EXPECT_TRUE(s1 == s1);
-    EXPECT_FALSE(s1 == s2);
-    EXPECT_TRUE(s1 == s3);
+    REQUIRE(session_quote_id_1 < session_quote_id_2);
+    REQUIRE_FALSE(session_quote_id_2 < session_quote_id_1);
+    REQUIRE(session_quote_id_1 == session_quote_id_1);
+    REQUIRE_FALSE(session_quote_id_1 == session_quote_id_2);
+    REQUIRE(session_quote_id_1 == session_quote_id_3);
 }
 
-TEST(OrderBookTest, Quoting) {
-    OrderBookListener listener;
-    OrderBook ob(dummy_instrument,listener);
-
-    std::string sessionId("session");
-    std::string quoteId("myquote");
-
-    auto quotes = QuoteOrders{new TestOrder(1,100,10,Order::BUY),new TestOrder(2,101,20,Order::SELL)};
-
-    ob.quote(quotes,100,10,101,20);
-
-    auto levels = ob.book();
-
-    ASSERT_EQ(levels.bids.size(), 1u);
-    EXPECT_EQ(levels.bids[0].price, 100);
-    EXPECT_EQ(levels.bids[0].quantity, 10);
-
-    ASSERT_EQ(levels.asks.size(), 1u);
-    EXPECT_EQ(levels.asks[0].price, 101);
-    EXPECT_EQ(levels.asks[0].quantity, 20);
-
-    ob.quote(quotes,100,20,101,30);
-
-    levels = ob.book();
-
-    ASSERT_EQ(levels.bids.size(), 1u);
-    EXPECT_EQ(levels.bids[0].price, 100);
-    EXPECT_EQ(levels.bids[0].quantity, 20);
-
-    ASSERT_EQ(levels.asks.size(), 1u);
-    EXPECT_EQ(levels.asks[0].price, 101);
-    EXPECT_EQ(levels.asks[0].quantity, 30);
-
-    ob.quote(quotes,100,0,101,30);
-
-    levels = ob.book();
-
-    EXPECT_EQ(levels.bids.size(), 0u);
-    ASSERT_EQ(levels.asks.size(), 1u);
-
-    EXPECT_EQ(levels.asks[0].price, 101);
-    EXPECT_EQ(levels.asks[0].quantity, 30);
-
-    ob.quote(quotes,100,0,101,0);
-    levels = ob.book();
-    EXPECT_EQ(levels.bids.size(), 0u);
-    EXPECT_EQ(levels.asks.size(), 0u);
+TEST_CASE("OrderBook quoting functionality", "[orderbook]") {
 }

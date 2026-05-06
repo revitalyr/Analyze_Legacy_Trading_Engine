@@ -51,12 +51,12 @@ Exchange (Main Interface)
 ### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/revitalyr/Analyze_Legacy_Trading_Engine.git
+# Clone the repository with submodules
+git clone --recurse-submodules https://github.com/revitalyr/Analyze_Legacy_Trading_Engine.git
 cd Analyze_Legacy_Trading_Engine/cpp_orderbook
 
-# Clone dependency
-git clone https://github.com/robaho/cpp_fixed.git ../cpp_fixed
+# If you already cloned without submodules:
+git submodule update --init --recursive
 
 # Build with CMake
 mkdir build && cd build

@@ -1,5 +1,5 @@
 CXX = clang++
-INCLUDES = -I ../cpp_fixed -I D:/tools/vcpkg/installed/x64-windows/include
+INCLUDES = -I external/cpp_fixed -I D:/tools/vcpkg/installed/x64-windows/include
 LDFLAGS = -L D:/tools/vcpkg/installed/x64-windows/lib -lboost_unit_test_framework-vc145-mt-x64-1_90
 # CXXFLAGS = -std=c++20 -Wall -O0 -fsanitize=address -fno-omit-frame-pointer -pedantic-errors -g ${INCLUDES}
 # CXXFLAGS = -std=c++20 -Wall -pedantic-errors -g ${INCLUDES}

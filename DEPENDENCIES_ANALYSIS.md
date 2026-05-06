@@ -57,7 +57,7 @@
 ### External Dependencies
 1. **cpp_fixed** - Fixed-point arithmetic library
    - Required for price calculations
-   - Located in `../../cpp_fixed/`
+   - Included as git submodule in `external/cpp_fixed/`
    - Header: `fixed.h`
 
 2. **Standard Library**

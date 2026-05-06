@@ -1,37 +1,37 @@
-#include <gtest/gtest.h>
+#include <catch2/catch_test_macros.hpp>
 
 #include "core/orderbook.h"
 #include "core/test.h"
 
-TEST(OrderListTest, OrderListSimple) {
-    OrderList orderlist(100);
-    EXPECT_TRUE(orderlist.begin() == orderlist.end());
+TEST_CASE("OrderList basic operations", "[orderlist]") {
+    OrderList orderList(100); // Renamed to camelCase
+    REQUIRE(orderList.begin() == orderList.end()); // Renamed to camelCase
 
-    auto o = new TestOrder(1, 100, 10, Order::BUY);
-    orderlist.pushback(o);
+    auto order = std::make_shared<TestOrder>(1, 100, 10, Order::Side::BUY); // Renamed to camelCase
+    orderList.pushBack(order); // Renamed to camelCase
 
-    EXPECT_TRUE(orderlist.begin() != orderlist.end());
-    EXPECT_EQ(*(orderlist.begin()), o);
+    REQUIRE(orderList.begin() != orderList.end()); // Renamed to camelCase
+    REQUIRE(*(orderList.begin()) == order); // Renamed to camelCase
 }
 
-TEST(OrderListTest, OrderListIterator) {
-    OrderList list(100);
-    EXPECT_TRUE(list.begin() == list.end());
+TEST_CASE("OrderList iterator", "[orderlist]") {
+    OrderList orderList(100); // Renamed to camelCase
+    REQUIRE(orderList.begin() == orderList.end()); // Renamed to camelCase
 
-    auto o = new TestOrder(1, 100, 10, Order::BUY);
-    list.pushback(o);
+    auto order = std::make_shared<TestOrder>(1, 100, 10, Order::Side::BUY); // Renamed to camelCase
+    orderList.pushBack(order); // Renamed to camelCase
 
-    EXPECT_TRUE(list.begin() != list.end());
-    EXPECT_EQ(*(list.begin()), o);
+    REQUIRE(orderList.begin() != orderList.end()); // Renamed to camelCase
+    REQUIRE(*(orderList.begin()) == order); // Renamed to camelCase
 
-    auto o2 = new TestOrder(2, 100, 10, Order::BUY);
-    list.pushback(o2);
+    auto order2 = std::make_shared<TestOrder>(2, 100, 10, Order::Side::BUY); // Renamed to camelCase
+    orderList.pushBack(order2); // Renamed to camelCase
 
-    EXPECT_EQ(*(list.begin()), o);
+    REQUIRE(*(orderList.begin()) == order); // Renamed to camelCase
 
-    auto itr = list.begin();
-    ++itr;
-    EXPECT_EQ(*itr, o2);
-    ++itr;
-    EXPECT_TRUE(itr == list.end());
+    auto it = orderList.begin(); // Renamed to camelCase
+    ++it;
+    REQUIRE(*it == order2); // Renamed to camelCase
+    ++it;
+    REQUIRE(it == orderList.end()); // Renamed to camelCase
 }

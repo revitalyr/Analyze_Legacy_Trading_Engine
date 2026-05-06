@@ -14,6 +14,8 @@
 #include "core/orderbook.h"
 #include "core/test.h"
 
+const std::string dummy_oid = "oid";
+
 void insertOrders(const bool withTrades) {
     static const int N_THREADS=std::thread::hardware_concurrency();
     static std::array<std::string,16> instruments;
@@ -83,7 +85,7 @@ void cancelOrders() {
     for(int t=0;t<N_THREADS;t++) {
         for(int i=0;i<N_ORDERS;i++) {
             auto oid = exchange.buy(session,instruments[t], 100.0 + 1 * (i%1000), 10, dummy_oid);
-            oids[t][i]=oid;
+            oids[t][i]=oid.value();
         }
     }
 

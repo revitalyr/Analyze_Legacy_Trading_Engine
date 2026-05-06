@@ -1,0 +1,3 @@
+Running 14 test cases...
+unknown location(0): fatal error: in "insertOrder_buy": stack overflow
+exchange_test.cpp(17): last checkpoint: "insertOrder_buy" test entry

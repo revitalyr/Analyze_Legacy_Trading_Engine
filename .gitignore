@@ -28,8 +28,8 @@ CPackConfig.cmake
 CPackSourceConfig.cmake
 
 # Test output and temporary files
-demo_output.txt
-temp_count.txt
+demo_*.txt
+temp_*.txt
 *.tmp
 *.temp
 

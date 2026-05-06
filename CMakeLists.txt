@@ -51,7 +51,9 @@ endif()
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         add_compile_options(/Od /Zi /RTC1)
-        add_link_options(/DEBUG)
+        # Disable incremental linking to avoid potential issues with test discovery
+        string(REPLACE "/INCREMENTAL" "/INCREMENTAL:NO" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+        set(CMAKE_EXE_LINKER_FLAGS "/INCREMENTAL:NO /DEBUG ${CMAKE_EXE_LINKER_FLAGS}")
     else()
         add_compile_options(
             -g3                    # Maximum debug information
@@ -74,39 +76,26 @@ else()
     endif()
 endif()
 
-# Test framework (GoogleTest)
-find_package(GTest CONFIG QUIET)
-if(NOT GTest_FOUND)
+# Test framework (Catch2 v3)
+find_package(Catch2 3 CONFIG QUIET)
+if(NOT Catch2_FOUND)
     include(FetchContent)
     FetchContent_Declare(
-        googletest
-        URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+        Catch2
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG v3.4.0
     )
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(googletest)
+    FetchContent_MakeAvailable(Catch2)
+    # Ensure CMake can find Catch.cmake module from the fetched source
+    list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 endif()
 
-# Suppress warnings for GoogleTest headers
-if(TARGET gtest)
-    target_compile_options(gtest PRIVATE -Wno-double-promotion)
-    target_compile_options(gtest PRIVATE -Wno-sign-conversion)
-    target_compile_options(gtest PRIVATE -Wno-conversion)
-    target_compile_options(gtest PRIVATE -Wno-old-style-cast)
-endif()
-
-if(TARGET gmock)
-    target_compile_options(gmock PRIVATE -Wno-double-promotion)
-    target_compile_options(gmock PRIVATE -Wno-sign-conversion)
-    target_compile_options(gmock PRIVATE -Wno-conversion)
-    target_compile_options(gmock PRIVATE -Wno-old-style-cast)
-endif()
-
-include(GoogleTest)
+include(Catch)
 
 # Include directories with modern organization
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../cpp_fixed)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/cpp_fixed)
 
 # Core library sources
 set(LIB_SOURCES
@@ -123,7 +112,7 @@ add_library(orderbook STATIC ${LIB_SOURCES})
 target_include_directories(orderbook PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../cpp_fixed>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/external/cpp_fixed>
 )
 
 # Compiler-specific target options
@@ -131,6 +120,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     target_compile_options(orderbook PRIVATE /W4)
 else()
     target_compile_options(orderbook PRIVATE -Wall -Wextra -pedantic -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-old-style-cast -Wno-unused-parameter)
+endif()
+
+# Check for cpp_fixed submodule
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/cpp_fixed/fixed.h")
+    message(FATAL_ERROR "cpp_fixed submodule not found. Initialize it with:\n  git submodule update --init --recursive")
 endif()
 
 # Modern testing configuration
@@ -144,30 +138,19 @@ foreach(TEST_SOURCE ${UNIT_TEST_SOURCES})
     add_executable(${TEST_NAME} ${TEST_SOURCE})
     target_link_libraries(${TEST_NAME} 
         PRIVATE orderbook
-        PRIVATE GTest::gtest_main
+        PRIVATE Catch2::Catch2WithMain
     )
     
-    # Suppress warnings for test targets
-    target_compile_options(${TEST_NAME} PRIVATE -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-old-style-cast -Wno-unused-parameter)
+    # Suppress warnings for test targets (GCC/Clang only)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        target_compile_options(${TEST_NAME} PRIVATE -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-old-style-cast -Wno-unused-parameter)
+    endif()
  
-    gtest_discover_tests(${TEST_NAME}
-        TIMEOUT 300
-        LABELS "unit"
+    catch_discover_tests(${TEST_NAME}
+        TEST_PREFIX "unit."
+        REPORTER console
     )
 endforeach()
-
-# Fixed-point arithmetic tests
-add_executable(fixed_test ../cpp_fixed/fixed_test.cpp)
-target_link_libraries(fixed_test 
-    PRIVATE orderbook 
-    PRIVATE GTest::gtest_main
-)
-# Suppress warnings for test targets
-target_compile_options(fixed_test PRIVATE -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-old-style-cast -Wno-unused-parameter)
-gtest_discover_tests(fixed_test
-        TIMEOUT 300
-        LABELS "unit;fixed"
-    )
 
 # Benchmark tests
 file(GLOB BENCHMARK_TEST_SOURCES "tests/benchmark/*_test.cpp")
@@ -179,8 +162,10 @@ foreach(BENCH_SOURCE ${BENCHMARK_TEST_SOURCES})
         PRIVATE orderbook 
     )
     
-    # Suppress warnings for benchmark targets
-    target_compile_options(${BENCH_NAME} PRIVATE -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-old-style-cast -Wno-unused-parameter -Wno-implicit-int-float-conversion)
+    # Suppress warnings for benchmark targets (GCC/Clang only)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        target_compile_options(${BENCH_NAME} PRIVATE -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-old-style-cast -Wno-unused-parameter -Wno-implicit-int-float-conversion)
+    endif()
     
     # Add benchmark to CTest
     add_test(NAME ${BENCH_NAME} COMMAND ${BENCH_NAME})
@@ -189,6 +174,28 @@ foreach(BENCH_SOURCE ${BENCHMARK_TEST_SOURCES})
     set_tests_properties(${BENCH_NAME} PROPERTIES
         TIMEOUT 600
         LABELS "benchmark;performance"
+    )
+endforeach()
+
+# Integration tests
+file(GLOB INTEGRATION_TEST_SOURCES "tests/integration/*_test.cpp")
+foreach(INT_SOURCE ${INTEGRATION_TEST_SOURCES})
+    get_filename_component(INT_NAME ${INT_SOURCE} NAME_WE)
+    
+    add_executable(${INT_NAME} ${INT_SOURCE})
+    target_link_libraries(${INT_NAME} 
+        PRIVATE orderbook
+        PRIVATE Catch2::Catch2WithMain
+    )
+    
+    # Suppress warnings for integration test targets (GCC/Clang only)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        target_compile_options(${INT_NAME} PRIVATE -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-old-style-cast -Wno-unused-parameter)
+    endif()
+    
+    catch_discover_tests(${INT_NAME}
+        TEST_PREFIX "integration."
+        REPORTER console
     )
 endforeach()
 
@@ -255,6 +262,12 @@ add_custom_target(run_all_tests
     COMMENT "Running all tests"
 )
 
+add_custom_target(run_integration_tests
+    COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --label-regex "integration"
+    DEPENDS orderbook
+    COMMENT "Running integration tests only"
+)
+
 # Code analysis and formatting targets
 find_program(CLANG_TIDY NAMES clang-tidy)
 find_program(CLANG_FORMAT NAMES clang-format)
@@ -315,7 +328,7 @@ message(STATUS "=== cpp_orderbook Configuration Summary ===")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++ standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
-message(STATUS "GoogleTest found: ${GTest_FOUND}")
+message(STATUS "Catch2 found: ${Catch2_FOUND}")
 message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 list(LENGTH UNIT_TEST_SOURCES UNIT_TEST_SOURCES_LEN)
 list(LENGTH BENCHMARK_TEST_SOURCES BENCHMARK_TEST_SOURCES_LEN)

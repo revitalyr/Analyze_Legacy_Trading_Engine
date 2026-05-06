@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ Order Book - Technical Documentation</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1em;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            flex-wrap: wrap;
+            padding: 0 20px;
+        }
+
+        .nav-tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1em;
+            font-weight: 500;
+            color: #495057;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .nav-tab:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom: 3px solid #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .diagram-container {
+            position: relative;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+        }
+
+        .scale-controls {
+            position: sticky;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+            z-index: 1000;
+            background: white;
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            float: right;
+        }
+
+        .scale-btn {
+            width: 35px;
+            height: 35px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .scale-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .scale-display {
+            min-width: 60px;
+            text-align: center;
+            line-height: 35px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .feature-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .feature-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .feature-list li:before {
+            content: "✅";
+            position: absolute;
+            left: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+
+        h2 {
+            color: #667eea;
+            margin: 30px 0 20px 0;
+            font-size: 1.8em;
+        }
+
+        h3 {
+            color: #495057;
+            margin: 20px 0 15px 0;
+            font-size: 1.4em;
+        }
+
+        p {
+            line-height: 1.6;
+            margin: 10px 0;
+            color: #495057;
+        }
+
+        @media (max-width: 768px) {
+            .nav-tabs {
+                flex-direction: column;
+            }
+
+            .nav-tab {
+                padding: 12px 15px;
+                text-align: left;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .scale-controls {
+                position: sticky;
+                top: 10px;
+                right: 10px;
+            }
+
+            .scale-btn {
+                width: 30px;
+                height: 30px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 C++ Order Book</h1>
+            <p>Ultra High Performance Trading Engine - 5M+ Orders/Second</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="overview">📊 Overview</button>
+            <button class="nav-tab" data-tab="architecture">🏗️ Architecture</button>
+            <button class="nav-tab" data-tab="api">🔄 API</button>
+            <button class="nav-tab" data-tab="data-structures">🗄️ Data Structures</button>
+            <button class="nav-tab" data-tab="memory-safety">🛡️ Memory Safety</button>
+            <button class="nav-tab" data-tab="deployment">🚀 Deployment</button>
+        </div>
+
+        <div class="content">
+            <!-- Overview Tab -->
+            <div class="tab-content active" id="overview">
+                <h2>System Overview</h2>
+                <p>The C++ Order Book is an ultra high performance financial exchange order book implementation capable of processing <strong>5M+ orders per second per CPU core</strong>. It features modern smart pointer architecture for enhanced memory safety and thread safety, making it ideal for high-frequency trading systems.</p>
+
+                <div class="feature-section">
+                    <h3>Key Capabilities</h3>
+                    <ul class="feature-list">
+                        <li>Smart Pointer Architecture using std::shared_ptr and std::weak_ptr</li>
+                        <li>Lock-Free Operations with atomic operations for high-performance concurrent access</li>
+                        <li>Modern C++20/26 with move semantics and RAII</li>
+                        <li>Thread Safe multi-threaded support with proper synchronization</li>
+                        <li>Memory Safe - eliminates memory leaks and dangling pointers</li>
+                        <li>High Performance: 5M+ orders/second per core with minimal smart pointer overhead (&lt; 2%)</li>
+                    </ul>
+                </div>
+
+                <div class="diagram-container">
+                    <div class="scale-controls">
+                        <button class="scale-btn" data-scale-delta="-10">−</button>
+                        <span class="scale-display">100%</span>
+                        <button class="scale-btn" data-scale-delta="10">+</button>
+                        <button class="scale-btn" data-reset-scale>⟲</button>
+                    </div>
+                    <div class="mermaid" id="overview-diagram">
+graph TD
+    A[Client Applications] -->|Submit Orders| B[Exchange Interface]
+    B --> C[OrderBook per Instrument]
+    C --> D[PriceLevels Buy/Sell]
+    D --> E[OrderList per Price]
+    E --> F[Node Linked List]
+    C --> G[OrderMap Fast Lookup]
+    B --> H[BookMap Instrument Mapping]
+    I[SpinLock] -->|Thread Safety| C
+    J[Smart Pointers] -->|Memory Management| F
+    K[cpp_fixed Library] -->|Fixed-Point Arithmetic| B
+    B -->|Trade Events| L[Exchange Listeners]
+    
+    style A fill:#667eea
+    style B fill:#667eea
+    style C fill:#28a745
+    style D fill:#28a745
+    style E fill:#28a745
+    style F fill:#28a745
+    style G fill:#28a745
+    style H fill:#6c757d
+    style I fill:#ffc107
+    style J fill:#ffc107
+    style K fill:#6c757d
+    style L fill:#6c757d
+                    </div>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Performance Benchmarks</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Operation</th>
+                                <th>Performance</th>
+                                <th>Hardware</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Order Insertion</td>
+                                <td>5.5M - 10.5M ops/sec</td>
+                                <td>4GHz Intel i7</td>
+                            </tr>
+                            <tr>
+                                <td>Order Matching</td>
+                                <td>4M - 8M ops/sec</td>
+                                <td>30% trade rate</td>
+                            </tr>
+                            <tr>
+                                <td>Order Cancellation</td>
+                                <td>4M - 8.5M ops/sec</td>
+                                <td>All price levels</td>
+                            </tr>
+                            <tr>
+                                <td>Multi-Core Scaling</td>
+                                <td>22M+ ops/sec</td>
+                                <td>One instrument per core</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Use Cases</h3>
+                    <ul class="feature-list">
+                        <li>High-Frequency Trading (HFT) - Ultra-low latency order matching</li>
+                        <li>Financial Exchanges - Core order book functionality</li>
+                        <li>Trading Simulators - Realistic market simulation</li>
+                        <li>Educational - Learning modern C++ and financial systems</li>
+                        <li>Research - Algorithm development and backtesting</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Architecture Tab -->
+            <div class="tab-content" id="architecture">
+                <h2>System Architecture</h2>
+                <p>The order book follows a hierarchical architecture designed for maximum performance and thread safety. Each instrument has its own OrderBook instance, enabling lock-free parallel processing across multiple cores.</p>
+
+                <div class="diagram-container">
+                    <div class="scale-controls">
+                        <button class="scale-btn" data-scale-delta="-10">−</button>
+                        <span class="scale-display">100%</span>
+                        <button class="scale-btn" data-scale-delta="10">+</button>
+                        <button class="scale-btn" data-reset-scale>⟲</button>
+                    </div>
+                    <div class="mermaid" id="architecture-diagram">
+sequenceDiagram
+    participant C as Client
+    participant E as Exchange
+    participant BM as BookMap
+    participant OB as OrderBook
+    participant PL as PriceLevels
+    participant OL as OrderList
+    participant OM as OrderMap
+
+    C->>E: buy(session, symbol, price, qty)
+    E->>BM: get_or_create(symbol)
+    BM-->>E: OrderBook*
+    E->>OB: add_order(order)
+    OB->>OM: insert(order_id, order)
+    OB->>PL: add_price_level(price, side)
+    PL->>OL: create_order_list()
+    OL->>OL: add_node(order)
+    OB->>OB: match_orders()
+    OB-->>E: order_id
+    E-->>C: std::optional&lt;long&gt;
+
+    Note over E,OM: Smart pointers manage memory
+    Note over OB,OL: Lock-free operations
+                    </div>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Core Components</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Component</th>
+                                <th>Responsibility</th>
+                                <th>Key Features</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Exchange</td>
+                                <td>Main interface for order management</td>
+                                <td>Session management, order routing</td>
+                            </tr>
+                            <tr>
+                                <td>OrderBook</td>
+                                <td>Per-instrument order book</td>
+                                <td>Price levels, order matching</td>
+                            </tr>
+                            <tr>
+                                <td>PriceLevels</td>
+                                <td>Buy/sell price level containers</td>
+                                <td>Sorted price levels, O(log n) lookup</td>
+                            </tr>
+                            <tr>
+                                <td>OrderList</td>
+                                <td>Orders at same price level</td>
+                                <td>Linked list with smart pointers</td>
+                            </tr>
+                            <tr>
+                                <td>OrderMap</td>
+                                <td>Fast order lookup by ID</td>
+                                <td>O(1) order cancellation</td>
+                            </tr>
+                            <tr>
+                                <td>BookMap</td>
+                                <td>Instrument to OrderBook mapping</td>
+                                <td>Multi-instrument support</td>
+                            </tr>
+                            <tr>
+                                <td>SpinLock</td>
+                                <td>Lock-free synchronization</td>
+                                <td>Atomic operations, minimal contention</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Smart Pointer Design</h3>
+                    <ul class="feature-list">
+                        <li><strong>shared_ptr</strong> - Shared ownership for Order and Node objects</li>
+                        <li><strong>weak_ptr</strong> - Break cyclic references, non-owning references</li>
+                        <li><strong>atomic&lt;shared_ptr&gt;</strong> - Thread-safe operations for concurrent access</li>
+                        <li><strong>Factory Methods</strong> - Controlled object creation and lifecycle</li>
+                        <li><strong>RAII</strong> - Automatic cleanup when objects go out of scope</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- API Tab -->
+            <div class="tab-content" id="api">
+                <h2>API Reference</h2>
+                <p>The Exchange class provides a clean, intuitive API for order management with smart pointer-based memory management.</p>
+
+                <div class="diagram-container">
+                    <div class="scale-controls">
+                        <button class="scale-btn" data-scale-delta="-10">−</button>
+                        <span class="scale-display">100%</span>
+                        <button class="scale-btn" data-scale-delta="10">+</button>
+                        <button class="scale-btn" data-reset-scale>⟲</button>
+                    </div>
+                    <div class="mermaid" id="api-diagram">
+flowchart TD
+    A[Client Code] --> B{Order Type}
+    B -->|Limit Buy| C[exchange.buy]
+    B -->|Limit Sell| D[exchange.sell]
+    B -->|Market Buy| E[exchange.marketBuy]
+    B -->|Market Sell| F[exchange.marketSell]
+    
+    C --> G[Order Validation]
+    D --> G
+    E --> H[Price Discovery]
+    F --> H
+    
+    G --> I[Order Matching]
+    H --> I
+    
+    I --> J{Match Found?}
+    J -->|Yes| K[Execute Trade]
+    J -->|No| L[Add to OrderBook]
+    
+    K --> M[Update OrderBook]
+    L --> M
+    
+    M --> N[Return Order ID]
+    N --> O[Client]
+    
+    P[Cancel Request] --> Q[exchange.cancel]
+    Q --> R[OrderMap Lookup]
+    R --> S[Remove from OrderList]
+    S --> T[Update OrderBook]
+    T --> U[Return Success]
+    
+    style A fill:#667eea
+    style O fill:#667eea
+    style K fill:#28a745
+    style U fill:#28a745
+    style J fill:#ffc107
+    style I fill:#6c757d
+                    </div>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Order Management API</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Method</th>
+                                <th>Parameters</th>
+                                <th>Returns</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>buy</td>
+                                <td>sessionId, instrument, price, quantity, orderId</td>
+                                <td>std::optional&lt;long&gt;</td>
+                                <td>Place limit buy order</td>
+                            </tr>
+                            <tr>
+                                <td>sell</td>
+                                <td>sessionId, instrument, price, quantity, orderId</td>
+                                <td>std::optional&lt;long&gt;</td>
+                                <td>Place limit sell order</td>
+                            </tr>
+                            <tr>
+                                <td>marketBuy</td>
+                                <td>sessionId, instrument, quantity, orderId</td>
+                                <td>std::optional&lt;long&gt;</td>
+                                <td>Place market buy order</td>
+                            </tr>
+                            <tr>
+                                <td>marketSell</td>
+                                <td>sessionId, instrument, quantity, orderId</td>
+                                <td>std::optional&lt;long&gt;</td>
+                                <td>Place market sell order</td>
+                            </tr>
+                            <tr>
+                                <td>cancel</td>
+                                <td>orderId, sessionId</td>
+                                <td>bool</td>
+                                <td>Cancel existing order</td>
+                            </tr>
+                            <tr>
+                                <td>getOrder</td>
+                                <td>orderId</td>
+                                <td>std::optional&lt;Order&gt;</td>
+                                <td>Retrieve order details</td>
+                            </tr>
+                            <tr>
+                                <td>book</td>
+                                <td>instrument</td>
+                                <td>std::optional&lt;Book&gt;</td>
+                                <td>Get order book snapshot</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Usage Example</h3>
+                    <div class="code-block">
+#include "core/exchange.h"
+
+int main() {
+    Exchange exchange;
+    
+    // Place orders
+    auto buyId = exchange.buy("session1", "AAPL", 150.25, 100, "order1");
+    auto sellId = exchange.sell("session2", "AAPL", 150.30, 50, "order2");
+    
+    // Get order book
+    auto book = exchange.book("AAPL");
+    std::cout << "Bids: " << book->bids.size() 
+              << ", Asks: " << book->asks.size() << std::endl;
+    
+    // Cancel order
+    if (buyId.has_value()) {
+        exchange.cancel(buyId.value(), "session1");
+    }
+    
+    return 0;
+}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Structures Tab -->
+            <div class="tab-content" id="data-structures">
+                <h2>Data Structures</h2>
+                <p>The order book uses optimized data structures for maximum performance while maintaining memory safety through smart pointers.</p>
+
+                <div class="diagram-container">
+                    <div class="scale-controls">
+                        <button class="scale-btn" data-scale-delta="-10">−</button>
+                        <span class="scale-display">100%</span>
+                        <button class="scale-btn" data-scale-delta="10">+</button>
+                        <button class="scale-btn" data-reset-scale>⟲</button>
+                    </div>
+                    <div class="mermaid" id="data-structures-diagram">
+erDiagram
+    Exchange ||--o{ OrderBook : manages
+    OrderBook ||--o{ PriceLevel : contains
+    OrderBook ||--|| OrderMap : uses
+    PriceLevel ||--o{ OrderList : contains
+    OrderList ||--o{ Node : linked
+    Node ||--|| Order : references
+    BookMap ||--o{ OrderBook : maps
+    
+    Exchange {
+        string sessionId
+        BookMap books
+        ExchangeListener listener
+    }
+    
+    OrderBook {
+        string instrument
+        PriceLevels bids
+        PriceLevels asks
+        OrderMap orderMap
+        SpinLock lock
+    }
+    
+    PriceLevel {
+        F price
+        int totalQuantity
+        OrderList orders
+    }
+    
+    OrderList {
+        shared_ptr head
+        shared_ptr tail
+        int size
+    }
+    
+    Node {
+        shared_ptr order
+        shared_ptr next
+        shared_ptr prev
+    }
+    
+    Order {
+        long orderId
+        Side side
+        F price
+        int quantity
+        string sessionId
+    }
+    
+    OrderMap {
+        unordered_map orders
+    }
+                    </div>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Order Structure</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>orderId</td>
+                                <td>long</td>
+                                <td>Unique order identifier</td>
+                            </tr>
+                            <tr>
+                                <td>side</td>
+                                <td>enum {BUY, SELL}</td>
+                                <td>Order side (buy or sell)</td>
+                            </tr>
+                            <tr>
+                                <td>price</td>
+                                <td>F (fixed-point)</td>
+                                <td>Order price using cpp_fixed</td>
+                            </tr>
+                            <tr>
+                                <td>quantity</td>
+                                <td>int</td>
+                                <td>Order quantity</td>
+                            </tr>
+                            <tr>
+                                <td>sessionId</td>
+                                <td>std::string</td>
+                                <td>Session identifier</td>
+                            </tr>
+                            <tr>
+                                <td>orderId</td>
+                                <td>std::string</td>
+                                <td>Client-provided order ID</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Book Structure</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>bids</td>
+                                <td>std::vector&lt;PriceLevel&gt;</td>
+                                <td>Buy orders (descending price)</td>
+                            </tr>
+                            <tr>
+                                <td>asks</td>
+                                <td>std::vector&lt;PriceLevel&gt;</td>
+                                <td>Sell orders (ascending price)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Performance Characteristics</h3>
+                    <ul class="feature-list">
+                        <li><strong>Order Insertion</strong>: O(log n) for price level lookup, O(1) for list insertion</li>
+                        <li><strong>Order Cancellation</strong>: O(1) via OrderMap direct lookup</li>
+                        <li><strong>Order Matching</strong>: O(1) for best price, O(k) for k matches</li>
+                        <li><strong>Memory</strong>: Smart pointer overhead &lt; 2%, automatic cleanup</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Memory Safety Tab -->
+            <div class="tab-content" id="memory-safety">
+                <h2>Memory Safety</h2>
+                <p>The project has been successfully migrated from raw pointers to smart pointers, providing automatic memory management, thread safety, and exception safety.</p>
+
+                <div class="diagram-container">
+                    <div class="scale-controls">
+                        <button class="scale-btn" data-scale-delta="-10">−</button>
+                        <span class="scale-display">100%</span>
+                        <button class="scale-btn" data-scale-delta="10">+</button>
+                        <button class="scale-btn" data-reset-scale>⟲</button>
+                    </div>
+                    <div class="mermaid" id="memory-safety-diagram">
+flowchart TD
+    A[Raw Pointers] -->|Migration| B[Smart Pointers]
+    
+    B --> C[shared_ptr&lt;Order&gt;]
+    B --> D[shared_ptr&lt;Node&gt;]
+    B --> E[weak_ptr&lt;Order&gt;]
+    B --> F[atomic&lt;shared_ptr&gt;]
+    
+    C --> G[Automatic Memory Management]
+    D --> G
+    E --> H[Break Cycles]
+    F --> I[Thread Safety]
+    
+    G --> J[No Memory Leaks]
+    G --> K[No Dangling Pointers]
+    H --> L[Prevent Circular References]
+    I --> M[Lock-Free Operations]
+    
+    J --> N[Production Ready]
+    K --> N
+    L --> N
+    M --> N
+    
+    style A fill:#dc3545
+    style B fill:#28a745
+    style N fill:#28a745
+    style C fill:#667eea
+    style D fill:#667eea
+    style E fill:#667eea
+    style F fill:#667eea
+                    </div>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Migration Benefits</h3>
+                    <ul class="feature-list">
+                        <li><strong>Memory Safety</strong>: Automatic memory management eliminates leaks</li>
+                        <li><strong>Thread Safety</strong>: Atomic smart pointer operations</li>
+                        <li><strong>Exception Safety</strong>: RAII and strong guarantees</li>
+                        <li><strong>Modern C++</strong>: Latest standards and best practices</li>
+                    </ul>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Performance Impact</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Impact</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Performance Overhead</td>
+                                <td>&lt; 2%</td>
+                                <td>Negligible for most use cases</td>
+                            </tr>
+                            <tr>
+                                <td>Memory Usage</td>
+                                <td>~3% increase</td>
+                                <td>Reference counting overhead</td>
+                            </tr>
+                            <tr>
+                                <td>Memory Leaks</td>
+                                <td>100% eliminated</td>
+                                <td>Automatic cleanup</td>
+                            </tr>
+                            <tr>
+                                <td>Dangling Pointers</td>
+                                <td>100% eliminated</td>
+                                <td>Weak ptr for non-owning refs</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Smart Pointer Usage Patterns</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Pattern</th>
+                                <th>Use Case</th>
+                                <th>Example</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>shared_ptr</td>
+                                <td>Shared ownership</td>
+                                <td>Order, Node objects</td>
+                            </tr>
+                            <tr>
+                                <td>weak_ptr</td>
+                                <td>Non-owning references</td>
+                                <td>OrderMap, cyclic references</td>
+                            </tr>
+                            <tr>
+                                <td>atomic&lt;shared_ptr&gt;</td>
+                                <td>Thread-safe access</td>
+                                <td>Concurrent order operations</td>
+                            </tr>
+                            <tr>
+                                <td>Factory Methods</td>
+                                <td>Controlled creation</td>
+                                <td>Order::create(), Node::create()</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="feature-section">
+                    <h3>RAII Guarantees</h3>
+                    <ul class="feature-list">
+                        <li>Objects are automatically destroyed when no longer needed</li>
+                        <li>Exception safety - resources cleaned up on stack unwinding</li>
+                        <li>No manual delete or free calls required</li>
+                        <li>Predictable object lifetimes</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Deployment Tab -->
+            <div class="tab-content" id="deployment">
+                <h2>Deployment</h2>
+                <p>Build and deploy the C++ Order Book using CMake, Make, or Visual Studio. The project supports multiple build systems and platforms.</p>
+
+                <div class="diagram-container">
+                    <div class="scale-controls">
+                        <button class="scale-btn" data-scale-delta="-10">−</button>
+                        <span class="scale-display">100%</span>
+                        <button class="scale-btn" data-scale-delta="10">+</button>
+                        <button class="scale-btn" data-reset-scale>⟲</button>
+                    </div>
+                    <div class="mermaid" id="deployment-diagram">
+flowchart TD
+    A[Source Code] --> B[Build System]
+    
+    B --> C{Choose Builder}
+    C -->|CMake| D[CMake Configure]
+    C -->|Make| E[Makefile Build]
+    C -->|VS| F[Visual Studio]
+    
+    D --> G[Generate Build Files]
+    G --> H[cmake --build]
+    H --> I[Binary Output]
+    
+    E --> J[make or make -f Makefile.gcc]
+    J --> I
+    
+    F --> K[VsDevCmd.bat]
+    K --> L[cmake --build]
+    L --> I
+    
+    I --> M[Run Tests]
+    M --> N[ctest --output-on-failure]
+    N --> O{Tests Pass?}
+    
+    O -->|Yes| P[Production Ready]
+    O -->|No| Q[Debug & Fix]
+    Q --> A
+    
+    P --> R[Deploy to Production]
+    
+    style A fill:#667eea
+    style I fill:#28a745
+    style P fill:#28a745
+    style R fill:#28a745
+    style O fill:#ffc107
+    style Q fill:#dc3545
+                    </div>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Prerequisites</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Requirement</th>
+                                <th>Version</th>
+                                <th>Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>C++ Compiler</td>
+                                <td>C++20 compatible</td>
+                                <td>VS 2022, Clang 12+, GCC 10+</td>
+                            </tr>
+                            <tr>
+                                <td>CMake</td>
+                                <td>3.16+</td>
+                                <td>Build system</td>
+                            </tr>
+                            <tr>
+                                <td>cpp_fixed</td>
+                                <td>Latest</td>
+                                <td>Fixed-point arithmetic</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Build with CMake (Recommended)</h3>
+                    <div class="code-block">
+# Clone the repository with submodules
+git clone --recurse-submodules https://github.com/revitalyr/Analyze_Legacy_Trading_Engine.git
+cd Analyze_Legacy_Trading_Engine/cpp_orderbook
+
+# If you already cloned without submodules:
+git submodule update --init --recursive
+
+# Build with CMake
+mkdir build && cd build
+cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+cmake --build .
+
+# Run tests
+ctest --output-on-failure
+                    </div>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Build with Makefile</h3>
+                    <div class="code-block">
+# Build with Clang (default)
+make
+
+# Build with GCC
+make -f Makefile.gcc
+
+# Run all tests
+make run_tests
+                    </div>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Build with Visual Studio</h3>
+                    <div class="code-block">
+# Setup Visual Studio environment
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat"
+
+# Build
+cmake --build . --config Release
+                    </div>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Running Tests</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Test Suite</th>
+                                <th>Command</th>
+                                <th>Coverage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>All Tests</td>
+                                <td>make run_tests</td>
+                                <td>Full test suite</td>
+                            </tr>
+                            <tr>
+                                <td>CMake Tests</td>
+                                <td>ctest --output-on-failure</td>
+                                <td>Full test suite</td>
+                            </tr>
+                            <tr>
+                                <td>OrderBook Tests</td>
+                                <td>./orderbook_test</td>
+                                <td>Order book operations</td>
+                            </tr>
+                            <tr>
+                                <td>Exchange Tests</td>
+                                <td>./exchange_test</td>
+                                <td>Exchange API</td>
+                            </tr>
+                            <tr>
+                                <td>Smart Pointer Tests</td>
+                                <td>./test_smart_pointer/smart_pointer_test</td>
+                                <td>Memory management</td>
+                            </tr>
+                            <tr>
+                                <td>Benchmarks</td>
+                                <td>./benchmark_test</td>
+                                <td>Performance tests</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Docker Support</h3>
+                    <div class="code-block">
+# Build Docker image
+docker build -t cpp-orderbook .
+
+# Run container
+docker run -it cpp-orderbook
+                    </div>
+                </div>
+
+                <div class="feature-section">
+                    <h3>Production Deployment Checklist</h3>
+                    <ul class="feature-list">
+                        <li>Build in Release mode with optimizations</li>
+                        <li>Run full test suite and verify all pass</li>
+                        <li>Run performance benchmarks for target hardware</li>
+                        <li>Configure appropriate logging and monitoring</li>
+                        <li>Set up exchange listeners for trade events</li>
+                        <li>Configure session management and authentication</li>
+                        <li>Test with realistic market data volumes</li>
+                        <li>Monitor memory usage and smart pointer overhead</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="mermaid-height-util.js"></script>
+</body>
+</html>

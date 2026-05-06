@@ -1,44 +1,44 @@
-#include <gtest/gtest.h>
+#include <catch2/catch_test_macros.hpp>
 
 #include "core/bookmap.h"
 
-static OrderBookListener listener;
+static OrderBookListener g_dummyListener; // Renamed to g_camelCase
 
-TEST(BookMapTest, BooksBasic) {
-    BookMap books;
+TEST_CASE("BookMap basic operations", "[bookmap]") {
+    BookMap bookMap; // Renamed to camelCase
 
-    auto book = books.get("dummy");
-    EXPECT_EQ(book, nullptr);
+    auto orderBook = bookMap.getOrderBook("dummy"); // Renamed to camelCase
+    REQUIRE(orderBook == nullptr); // Renamed to camelCase
 
-    book = books.getOrCreate("dummy", listener);
-    EXPECT_NE(book, nullptr);
+    orderBook = bookMap.getOrCreate("dummy", g_dummyListener); // Renamed to camelCase, g_camelCase
+    REQUIRE(orderBook != nullptr); // Renamed to camelCase
 
-    auto book2 = books.getOrCreate("dummy", listener);
-    EXPECT_EQ(book, book2);
+    auto orderBook2 = bookMap.getOrCreate("dummy", g_dummyListener); // Renamed to camelCase, g_camelCase
+    REQUIRE(orderBook == orderBook2); // Renamed to camelCase
 
-    auto book3 = books.get("dummy");
-    EXPECT_EQ(book, book2);
-    EXPECT_EQ(book2, book3);
+    auto orderBook3 = bookMap.getOrderBook("dummy"); // Renamed to camelCase
+    REQUIRE(orderBook == orderBook2); // Renamed to camelCase
+    REQUIRE(orderBook2 == orderBook3); // Renamed to camelCase
 }
 
-TEST(BookMapTest, Instruments) {
-    BookMap books;
+TEST_CASE("BookMap instruments", "[bookmap]") {
+    BookMap bookMap; // Renamed to camelCase
     
-    auto book = books.getOrCreate("dummy", listener);
-    EXPECT_NE(book, nullptr);
+    auto orderBook = bookMap.getOrCreate("dummy", g_dummyListener); // Renamed to camelCase, g_camelCase
+    REQUIRE(orderBook != nullptr); // Renamed to camelCase
     
-    // Check if book has instruments
-    if (book && book->instruments().size() > 0) {
-        EXPECT_EQ(book->instruments()[0], "dummy");
-        EXPECT_EQ(book->instruments().size(), 1u);
+    // Check if orderBook has instruments // Renamed to camelCase
+    if (orderBook && orderBook->instruments().size() > 0) { // Renamed to camelCase
+        REQUIRE(orderBook->instruments()[0] == "dummy"); // Renamed to camelCase
+        REQUIRE(orderBook->instruments().size() == 1); // Renamed to camelCase
     } else {
-        EXPECT_EQ(book->instruments().size(), 0u);
+        REQUIRE(orderBook->instruments().size() == 0); // Renamed to camelCase
     }
     
-    // Check if book has exactly one instrument
-    if (book && book->instruments().size() == 1) {
-        EXPECT_EQ(book->instruments()[0], "dummy");
+    // Check if orderBook has exactly one instrument // Renamed to camelCase
+    if (orderBook && orderBook->instruments().size() == 1) { // Renamed to camelCase
+        REQUIRE(orderBook->instruments()[0] == "dummy"); // Renamed to camelCase
     } else {
-        EXPECT_EQ(book->instruments().size(), 1u);
+        REQUIRE(orderBook->instruments().size() == 1); // Renamed to camelCase
     }
 }

@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Include directories
 include_directories(../include)
-include_directories(../../cpp_fixed)
+include_directories(../external/cpp_fixed)
 
 # Add the demo executable
 add_executable(trading_demo trading_demo.cpp)
@@ -15,7 +15,7 @@ add_executable(trading_demo trading_demo.cpp)
 target_link_libraries(trading_demo ${CMAKE_CURRENT_SOURCE_DIR}/../build_gtest/orderbook.lib)
 
 # Set include directories for the target
-target_include_directories(trading_demo PRIVATE ../include ../../cpp_fixed)
+target_include_directories(trading_demo PRIVATE ../include ../external/cpp_fixed)
 
 # Add Windows subsystem
 target_link_options(trading_demo PRIVATE /SUBSYSTEM:CONSOLE)

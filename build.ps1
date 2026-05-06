@@ -95,15 +95,17 @@ if ($Package) {
     Get-ChildItem "$PROJECT_ROOT/*.h" | Copy-Item -Destination "$DIST_DIR/include"
     
     # Copy cpp_fixed headers
-    if (Test-Path "$PROJECT_ROOT/../cpp_fixed") {
-        Get-ChildItem "$PROJECT_ROOT/../cpp_fixed/*.h" | Copy-Item -Destination "$DIST_DIR/include"
+    if (Test-Path "$PROJECT_ROOT/external/cpp_fixed") {
+        Get-ChildItem "$PROJECT_ROOT/external/cpp_fixed/*.h" | Copy-Item -Destination "$DIST_DIR/include"
     }
     
-    # Copy runtime dependencies (Boost DLLs)
-    $boost_dlls = @(
-        "$VCPKG_ROOT/installed/x64-windows/bin/boost_unit_test_framework-vc145-mt-x64-1_90.dll"
+    # Copy runtime dependencies (GTest and Boost DLLs)
+    $runtime_dlls = @(
+        "$VCPKG_ROOT/installed/x64-windows/bin/boost_unit_test_framework-vc145-mt-x64-1_90.dll",
+        "$VCPKG_ROOT/installed/x64-windows/bin/gtest.dll",
+        "$VCPKG_ROOT/installed/x64-windows/bin/gtest_main.dll"
     )
-    foreach ($dll in $boost_dlls) {
+    foreach ($dll in $runtime_dlls) {
         if (Test-Path $dll) {
             Copy-Item $dll "$DIST_DIR/bin"
         }
